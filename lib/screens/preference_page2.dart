@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 
-class PreferencePage2 extends StatelessWidget {
+class PreferencePage2 extends StatefulWidget {
+  @override
+  _PreferencePage2State createState() => _PreferencePage2State();
+}
+
+class _PreferencePage2State extends State<PreferencePage2> {
+  bool _isCelsius = true;
+  bool _isAstronomyReminder = false;
+  bool _isRainReminder = true;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -13,14 +22,22 @@ class PreferencePage2 extends StatelessWidget {
             children: [
               ChoiceChip(
                 label: const Text('Celcius (°C)'),
-                selected: true,
-                onSelected: (_) {},
+                selected: _isCelsius,
+                onSelected: (selected) {
+                  setState(() {
+                    _isCelsius = selected;
+                  });
+                },
               ),
               const SizedBox(width: 10),
               ChoiceChip(
                 label: const Text('Fahrenheit (°F)'),
-                selected: false,
-                onSelected: (_) {},
+                selected: !_isCelsius,
+                onSelected: (selected) {
+                  setState(() {
+                    _isCelsius = !selected;
+                  });
+                },
               ),
             ],
           ),
@@ -30,14 +47,22 @@ class PreferencePage2 extends StatelessWidget {
             children: [
               ChoiceChip(
                 label: const Text('Ya'),
-                selected: false,
-                onSelected: (_) {},
+                selected: _isAstronomyReminder,
+                onSelected: (selected) {
+                  setState(() {
+                    _isAstronomyReminder = selected;
+                  });
+                },
               ),
               const SizedBox(width: 10),
               ChoiceChip(
                 label: const Text('Tidak'),
-                selected: true,
-                onSelected: (_) {},
+                selected: !_isAstronomyReminder,
+                onSelected: (selected) {
+                  setState(() {
+                    _isAstronomyReminder = !selected;
+                  });
+                },
               ),
             ],
           ),
@@ -47,14 +72,22 @@ class PreferencePage2 extends StatelessWidget {
             children: [
               ChoiceChip(
                 label: const Text('Ya'),
-                selected: true,
-                onSelected: (_) {},
+                selected: _isRainReminder,
+                onSelected: (selected) {
+                  setState(() {
+                    _isRainReminder = selected;
+                  });
+                },
               ),
               const SizedBox(width: 10),
               ChoiceChip(
                 label: const Text('Tidak'),
-                selected: false,
-                onSelected: (_) {},
+                selected: !_isRainReminder,
+                onSelected: (selected) {
+                  setState(() {
+                    _isRainReminder = !selected;
+                  });
+                },
               ),
             ],
           ),
@@ -63,3 +96,4 @@ class PreferencePage2 extends StatelessWidget {
     );
   }
 }
+

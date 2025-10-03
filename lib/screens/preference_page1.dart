@@ -2,7 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/theme_provider.dart';
 
-class PreferencePage1 extends StatelessWidget {
+class PreferencePage1 extends StatefulWidget {
+  @override
+  _PreferencePage1State createState() => _PreferencePage1State();
+}
+
+class _PreferencePage1State extends State<PreferencePage1> {
+  bool _isNotificationEnabled = true;
+  bool _isLocationAutomatic = true;
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -39,14 +47,22 @@ class PreferencePage1 extends StatelessWidget {
             children: [
               ChoiceChip(
                 label: const Text('Ya'),
-                selected: true,
-                onSelected: (_) {},
+                selected: _isNotificationEnabled,
+                onSelected: (selected) {
+                  setState(() {
+                    _isNotificationEnabled = selected;
+                  });
+                },
               ),
               const SizedBox(width: 10),
               ChoiceChip(
                 label: const Text('Tidak'),
-                selected: false,
-                onSelected: (_) {},
+                selected: !_isNotificationEnabled,
+                onSelected: (selected) {
+                  setState(() {
+                    _isNotificationEnabled = !selected;
+                  });
+                },
               ),
             ],
           ),
@@ -56,14 +72,22 @@ class PreferencePage1 extends StatelessWidget {
             children: [
               ChoiceChip(
                 label: const Text('Gunakan perangkat'),
-                selected: true,
-                onSelected: (_) {},
+                selected: _isLocationAutomatic,
+                onSelected: (selected) {
+                  setState(() {
+                    _isLocationAutomatic = selected;
+                  });
+                },
               ),
               const SizedBox(width: 10),
               ChoiceChip(
                 label: const Text('Pilih manual'),
-                selected: false,
-                onSelected: (_) {},
+                selected: !_isLocationAutomatic,
+                onSelected: (selected) {
+                  setState(() {
+                    _isLocationAutomatic = !selected;
+                  });
+                },
               ),
             ],
           ),
@@ -72,3 +96,4 @@ class PreferencePage1 extends StatelessWidget {
     );
   }
 }
+
