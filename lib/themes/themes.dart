@@ -13,7 +13,7 @@ final ThemeData lightTheme = ThemeData(
       fontWeight: FontWeight.bold,
     ),
   ),
-  cardColor: Colors.grey[100],
+  cardColor: Colors.grey[50],
   switchTheme: SwitchThemeData(
     thumbColor: WidgetStateProperty.all(AppColors.lightAccent),
     trackColor: WidgetStateProperty.all(
@@ -22,6 +22,10 @@ final ThemeData lightTheme = ThemeData(
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(backgroundColor: AppColors.lightAccent),
+  ),
+  cardTheme: CardThemeData(
+    elevation: 4,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
   ),
 );
 
@@ -37,12 +41,16 @@ final ThemeData darkTheme = ThemeData(
       fontWeight: FontWeight.bold,
     ),
   ),
-  cardColor: Colors.grey[800],
+  cardColor: Colors.grey[850],
   switchTheme: SwitchThemeData(
     thumbColor: WidgetStateProperty.all(AppColors.darkAccent),
     trackColor: WidgetStateProperty.all(AppColors.darkPrimary.withOpacity(0.5)),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(backgroundColor: AppColors.darkAccent),
+  ),
+  cardTheme: CardThemeData(
+    elevation: 4,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
   ),
 );

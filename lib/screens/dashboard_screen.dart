@@ -20,12 +20,22 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 10),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  Text(DummyData.date),
-                  Text('${DummyData.temperature}°C'),
-                  Text(DummyData.weatherCondition),
+                  Text(
+                    DummyData.date,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '${DummyData.temperature}°C',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  Text(
+                    DummyData.weatherCondition,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 ],
               ),
             ),
@@ -53,16 +63,35 @@ class DashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           const Text('Prediksi Hujan 6 Jam ke Depan'),
-          SizedBox(
+          Container(
             height: 100,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.blue.withOpacity(0.3),
+                  Colors.blue.withOpacity(0.7),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+            ),
             child: Row(
               children: DummyData.hourlyRain
+                  .asMap()
+                  .entries
                   .map(
-                    (rain) => Expanded(
+                    (entry) => Expanded(
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 2),
-                        height: rain * 100, // Scale for bar height
-                        color: Colors.blue,
+                        height: entry.value * 100, // Scale for bar height
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.blue.withOpacity(0.5), Colors.blue],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                     ),
                   )
@@ -71,11 +100,16 @@ class DashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           const Text('Peta Polusi Cahaya'),
-          Container(
-            height: 200,
-            color: Colors.grey[300], // Placeholder for map
-            child: const Center(
-              child: Text('Placeholder for Light Pollution Map'),
+          Card(
+            child: Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text('Placeholder for Light Pollution Map'),
+              ),
             ),
           ),
         ],
@@ -98,8 +132,15 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Chip(
-      label: Column(children: [Text(label), Text(value)]),
+      label: Column(
+        children: [
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          Text(value, style: Theme.of(context).textTheme.bodyMedium),
+        ],
+      ),
       backgroundColor: color.withOpacity(0.2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     );
   }
 }
+
