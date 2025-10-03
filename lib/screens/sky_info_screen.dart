@@ -11,9 +11,9 @@ class SkyInfoScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Info Langit',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: 20),
           Card(
@@ -21,12 +21,18 @@ class SkyInfoScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 children: [
-                  const Text('Skor Observasi'),
+                  Text(
+                    'Skor Observasi',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   Text(
                     DummyData.observationScore.toString(),
-                    style: const TextStyle(fontSize: 48),
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                  const Text('Menguntungkan awan, fase bulan, polusi cahaya.'),
+                  Text(
+                    'Menguntungkan awan, fase bulan, polusi cahaya.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 ],
               ),
             ),
@@ -69,9 +75,17 @@ class _SkyInfoItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(label, style: Theme.of(context).textTheme.bodyMedium),
+        Text(
+          value,
+          style:
+              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ) ?? // Null-aware call
+              const TextStyle(fontWeight: FontWeight.bold), // Fallback style
+        ),
       ],
     );
   }
 }
+

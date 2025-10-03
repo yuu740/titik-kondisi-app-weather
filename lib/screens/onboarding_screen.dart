@@ -5,6 +5,7 @@ import 'preference_page1.dart';
 import 'preference_page2.dart';
 import 'welcome_page.dart';
 import 'main_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -18,7 +19,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentPage = 0;
 
   @override
+  void initState() {
+    super.initState();
+    _saveFirstRun();
+  }
+
+  Future<void> _saveFirstRun() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isFirstRun', false);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       body: PageView(
         controller: _pageController,
@@ -26,21 +40,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         children: [
           PreferencePage1(),
           PreferencePage2(),
-          WelcomePage(
-            onStart: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const MainScreen()),
-              );
-            },
-          ),
+          WelcomePage(onStart: null), // Hapus onStart karena animasi otomatis
         ],
       ),
       bottomNavigationBar: BottomAppBar(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (_currentPage > 0)
+            if (_currentPage > 0 &&
+                _currentPage < 2) // Sembunyikan jika di WelcomePage
               TextButton(
                 onPressed: () => _pageController.previousPage(
                   duration: const Duration(milliseconds: 300),
@@ -48,16 +56,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 child: const Text('Back'),
               ),
-            TextButton(
-              onPressed: () => _pageController.nextPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.ease,
+            if (_currentPage < 2) // Sembunyikan jika di WelcomePage
+              TextButton(
+                onPressed: () {
+                  if (_currentPage == 1) {
+                    _pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.ease,
+                    );
+                  } else if (_currentPage == 0) {
+                    _pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.ease,
+                    );
+                  }
+                },
+                child: Text(_currentPage == 1 ? 'Get Started' : 'Next'),
               ),
-              child: const Text('Next'),
-            ),
           ],
         ),
       ),
     );
   }
 }
+

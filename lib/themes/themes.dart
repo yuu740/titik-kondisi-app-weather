@@ -15,13 +15,27 @@ final ThemeData lightTheme = ThemeData(
   ),
   cardColor: Colors.grey[50],
   switchTheme: SwitchThemeData(
-    thumbColor: WidgetStateProperty.all(AppColors.lightAccent),
+    thumbColor: WidgetStateProperty.all(
+      AppColors.lightAccent,
+    ), // Biru untuk light mode
     trackColor: WidgetStateProperty.all(
       AppColors.lightPrimary.withOpacity(0.5),
     ),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(backgroundColor: AppColors.lightAccent),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: AppColors.lightAccent,
+    ), // Biru untuk tombol
+  ),
+  chipTheme: ChipThemeData(
+    // Ganti choiceChipTheme dengan chipTheme
+    backgroundColor: AppColors.lightBackground,
+    selectedColor: AppColors.lightAccent.withOpacity(0.5),
+    disabledColor: AppColors.lightBackground.withOpacity(0.2),
+    labelStyle: TextStyle(color: AppColors.lightText),
+    secondaryLabelStyle: TextStyle(color: AppColors.lightText),
+    padding: const EdgeInsets.all(8.0),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
   ),
   cardTheme: CardThemeData(
     elevation: 4,
@@ -48,6 +62,16 @@ final ThemeData darkTheme = ThemeData(
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(backgroundColor: AppColors.darkAccent),
+  ),
+  chipTheme: ChipThemeData(
+    // Ganti choiceChipTheme dengan chipTheme
+    backgroundColor: AppColors.darkBackground,
+    selectedColor: AppColors.darkAccent.withOpacity(0.5),
+    disabledColor: AppColors.darkBackground.withOpacity(0.2),
+    labelStyle: TextStyle(color: AppColors.darkText),
+    secondaryLabelStyle: TextStyle(color: AppColors.darkText),
+    padding: const EdgeInsets.all(8.0),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
   ),
   cardTheme: CardThemeData(
     elevation: 4,

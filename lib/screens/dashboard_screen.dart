@@ -16,7 +16,10 @@ class DashboardScreen extends StatelessWidget {
             style: const TextStyle(color: Colors.red),
           ),
           const SizedBox(height: 10),
-          Text(DummyData.location),
+          Text(
+            DummyData.location,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           const SizedBox(height: 10),
           Card(
             child: Padding(
@@ -68,8 +71,8 @@ class DashboardScreen extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.blue.withOpacity(0.3),
-                  Colors.blue.withOpacity(0.7),
+                  Theme.of(context).primaryColor.withOpacity(0.3),
+                  Theme.of(context).primaryColor.withOpacity(0.7),
                 ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
@@ -86,7 +89,10 @@ class DashboardScreen extends StatelessWidget {
                         height: entry.value * 100, // Scale for bar height
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Colors.blue.withOpacity(0.5), Colors.blue],
+                            colors: [
+                              Theme.of(context).primaryColor.withOpacity(0.5),
+                              Theme.of(context).primaryColor,
+                            ],
                             begin: Alignment.bottomCenter,
                             end: Alignment.topCenter,
                           ),
@@ -104,7 +110,7 @@ class DashboardScreen extends StatelessWidget {
             child: Container(
               height: 200,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(

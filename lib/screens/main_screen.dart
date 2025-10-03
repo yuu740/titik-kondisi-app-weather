@@ -40,6 +40,9 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Settings',
           ),
         ],
+        selectedItemColor: Theme.of(
+          context,
+        ).primaryColor, // Sesuaikan warna berdasarkan tema
       ),
     );
   }
