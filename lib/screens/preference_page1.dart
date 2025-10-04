@@ -7,31 +7,24 @@ class PreferencePage1 extends StatefulWidget {
   const PreferencePage1({super.key});
 
   @override
-  _PreferencePage1State createState() => _PreferencePage1State();
+  State<PreferencePage1> createState() => _PreferencePage1State();
 }
 
 class _PreferencePage1State extends State<PreferencePage1> {
-  // Menggunakan nullable boolean agar tidak ada yang terpilih di awal
   bool? _isNotificationEnabled;
   bool? _isLocationAutomatic;
 
-  // Method untuk meminta izin notifikasi
   Future<void> _requestNotificationPermission() async {
     final status = await Permission.notification.request();
     if (mounted) {
-      setState(() {
-        _isNotificationEnabled = status.isGranted;
-      });
+      setState(() => _isNotificationEnabled = status.isGranted);
     }
   }
 
-  // Method untuk meminta izin lokasi
   Future<void> _requestLocationPermission() async {
     final status = await Permission.location.request();
     if (mounted) {
-      setState(() {
-        _isLocationAutomatic = status.isGranted;
-      });
+      setState(() => _isLocationAutomatic = status.isGranted);
     }
   }
 
@@ -40,18 +33,16 @@ class _PreferencePage1State extends State<PreferencePage1> {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      // Tambahkan AppBar untuk estetika
       appBar: AppBar(
         title: const Text('Pengaturan Awal (1/2)'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             const Text(
               'Personalisasi Aplikasi',
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
@@ -63,119 +54,148 @@ class _PreferencePage1State extends State<PreferencePage1> {
                 context,
               ).textTheme.titleMedium?.copyWith(color: Colors.grey),
             ),
-            const SizedBox(height: 40),
-
-            // Pilihan Tema
-            const Text(
-              '1. Tema apa yang Anda suka?',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: ChoiceChip(
-                    label: const Text('Light'),
-                    selected: themeProvider.themeMode == ThemeMode.light,
+            const SizedBox(height: 32),
+            _buildPreferenceCard(
+              context: context,
+              icon: Icons.color_lens_outlined,
+              title: 'Tema Pilihan Anda',
+              child: Wrap(
+                // Menggunakan Wrap untuk responsivitas
+                spacing: 12.0,
+                runSpacing: 12.0,
+                children: [
+                  _buildChoiceChip(
+                    context: context,
+                    label: 'Light',
+                    isSelected: themeProvider.themeMode == ThemeMode.light,
                     onSelected: (_) => themeProvider.toggleTheme(false),
-                    labelStyle: TextStyle(
-                      color: themeProvider.themeMode == ThemeMode.light
-                          ? Theme.of(context).colorScheme.onPrimary
-                          : null,
-                    ),
-                    selectedColor: Theme.of(context).colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ChoiceChip(
-                    label: const Text('Dark'),
-                    selected: themeProvider.themeMode == ThemeMode.dark,
+                  _buildChoiceChip(
+                    context: context,
+                    label: 'Dark',
+                    isSelected: themeProvider.themeMode == ThemeMode.dark,
                     onSelected: (_) => themeProvider.toggleTheme(true),
-                    labelStyle: TextStyle(
-                      color: themeProvider.themeMode == ThemeMode.dark
-                          ? Theme.of(context).colorScheme.onPrimary
-                          : null,
-                    ),
-                    selectedColor: Theme.of(context).colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 30),
-
-            // Pilihan Notifikasi
-            const Text(
-              '2. Izinkan pengingat cuaca?',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: ChoiceChip(
-                    label: const Text('Ya, tentu'),
-                    selected: _isNotificationEnabled == true,
+            const SizedBox(height: 20),
+            _buildPreferenceCard(
+              context: context,
+              icon: Icons.notifications_active_outlined,
+              title: 'Izinkan Pengingat Cuaca?',
+              child: Wrap(
+                spacing: 12.0,
+                runSpacing: 12.0,
+                children: [
+                  _buildChoiceChip(
+                    context: context,
+                    label: 'Ya, tentu',
+                    isSelected: _isNotificationEnabled == true,
                     onSelected: (selected) {
                       if (selected) _requestNotificationPermission();
                     },
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ChoiceChip(
-                    label: const Text('Tidak'),
-                    selected: _isNotificationEnabled == false,
+                  _buildChoiceChip(
+                    context: context,
+                    label: 'Tidak',
+                    isSelected: _isNotificationEnabled == false,
                     onSelected: (selected) {
                       if (selected)
                         setState(() => _isNotificationEnabled = false);
                     },
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 30),
-
-            // Pilihan Lokasi
-            const Text(
-              '3. Gunakan lokasi otomatis?',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: ChoiceChip(
-                    label: const Text('Gunakan perangkat'),
-                    selected: _isLocationAutomatic == true,
+            const SizedBox(height: 20),
+            _buildPreferenceCard(
+              context: context,
+              icon: Icons.location_on_outlined,
+              title: 'Gunakan Lokasi Otomatis?',
+              child: Wrap(
+                spacing: 12.0,
+                runSpacing: 12.0,
+                children: [
+                  _buildChoiceChip(
+                    context: context,
+                    label: 'Ya, Otomatis',
+                    isSelected: _isLocationAutomatic == true,
                     onSelected: (selected) {
                       if (selected) _requestLocationPermission();
                     },
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ChoiceChip(
-                    label: const Text('Pilih manual'),
-                    selected: _isLocationAutomatic == false,
+                  _buildChoiceChip(
+                    context: context,
+                    label: 'Pilih Manual',
+                    isSelected: _isLocationAutomatic == false,
                     onSelected: (selected) {
                       if (selected)
                         setState(() => _isLocationAutomatic = false);
                     },
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
-}
 
+  Widget _buildPreferenceCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required Widget child,
+  }) {
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: Theme.of(context).primaryColor),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChoiceChip({
+    required BuildContext context,
+    required String label,
+    required bool isSelected,
+    required ValueChanged<bool> onSelected,
+  }) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: onSelected,
+      labelStyle: TextStyle(
+        color: isSelected ? Theme.of(context).colorScheme.onPrimary : null,
+        fontWeight: FontWeight.bold,
+      ),
+      selectedColor: Theme.of(context).colorScheme.primary,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    );
+  }
+}
