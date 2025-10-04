@@ -146,7 +146,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // --- WIDGET INI YANG DIMODIFIKASI ---
   Widget _buildHeader(ThemeData theme, LocationProvider locationProvider) {
+    final bool isDarkMode = theme.brightness == Brightness.dark;
+    final Color locationColor = isDarkMode ? Colors.white70 : Colors.black87;
+
     return AnimatedFadeSlide(
       delay: 100,
       child: Column(
@@ -155,23 +159,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Text(DummyData.rainPrediction, style: theme.textTheme.headlineSmall),
           const SizedBox(height: 8),
           Row(
+            // Agar ikon dan tombol edit tetap di atas jika teks wrapping
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.location_on, color: Colors.grey[600], size: 16),
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: 2.0,
+                ), // Menyesuaikan posisi ikon
+                child: Icon(Icons.location_on, color: locationColor, size: 18),
+              ),
               const SizedBox(width: 8),
-              Expanded(
+              // Mengganti Expanded dengan Flexible agar teks bisa wrap
+              Flexible(
                 child: locationProvider.isLoading
-                    ? const Text("Memuat lokasi...")
+                    ? Text(
+                        "Memuat lokasi...",
+                        style: TextStyle(color: locationColor),
+                      )
                     : Text(
                         locationProvider.currentLocationName ??
                             "Lokasi tidak diketahui",
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: Colors.grey,
+                          color: locationColor,
                         ),
-                        overflow: TextOverflow.ellipsis,
+                        // Text akan otomatis wrap jika tidak muat
                       ),
               ),
               IconButton(
-                icon: const Icon(Icons.edit_location_alt_outlined, size: 20),
+                icon: Icon(
+                  Icons.edit_location_alt_outlined,
+                  size: 20,
+                  color: locationColor.withOpacity(0.7),
+                ),
                 onPressed: () => _showSearchDialog(context),
               ),
             ],
@@ -283,13 +302,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // FIX: Mengganti Row dengan ListView horizontal untuk mengatasi overflow
   Widget _buildRainForecast(BuildContext context) {
     final theme = Theme.of(context);
     return AnimatedFadeSlide(
       delay: 500,
       child: Container(
-        height: 130, // Sedikit menambah tinggi untuk padding
+        height: 130,
         decoration: BoxDecoration(
           color: theme.cardColor.withOpacity(0.8),
           borderRadius: BorderRadius.circular(16),
@@ -312,11 +330,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 4),
                 Expanded(
                   child: Container(
-                    width: 35, // Lebar bar
+                    width: 35,
                     alignment: Alignment.bottomCenter,
                     child: Container(
                       width: 35,
-                      height: entry.value * 60, // Ketinggian bar dinamis
+                      height: entry.value * 60,
                       decoration: BoxDecoration(
                         color: theme.primaryColor,
                         borderRadius: const BorderRadius.all(
