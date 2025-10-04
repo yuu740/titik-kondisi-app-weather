@@ -1,17 +1,22 @@
-// main.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import './screens/splash_screen.dart'; // MODIFIED: Import splash screen
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:titik_kondisi/provider/setting_provider.dart';
+import './screens/splash_screen.dart';
 import './provider/theme_provider.dart';
+import './provider/location_provider.dart';
 import './themes/themes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Pengecekan isFirstRun dipindahkan ke SplashScreen
+  await initializeDateFormatting('id_ID', null);
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => LocationProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -30,9 +35,7 @@ class MyApp extends StatelessWidget {
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
       debugShowCheckedModeBanner: false,
-      // FIX: Home sekarang selalu SplashScreen
       home: const SplashScreen(),
     );
   }
 }
-
