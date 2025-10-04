@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/dummy_data.dart';
 import '../provider/theme_provider.dart';
 
-// Model untuk partikel hujan
+// Model untuk partikel hujan (Tidak ada perubahan)
 class RainParticle {
   late Offset position;
   late double speed;
@@ -26,7 +27,7 @@ class RainParticle {
   }
 }
 
-// Painter untuk Hujan
+// Painter untuk Hujan (Tidak ada perubahan)
 class RainPainter extends CustomPainter {
   final List<RainParticle> particles;
   final Animation<double> animation;
@@ -62,7 +63,7 @@ class RainPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// Model untuk Bintang Jatuh
+// Model untuk Bintang Jatuh (Tidak ada perubahan)
 class ShootingStar {
   late Offset position;
   late double speed;
@@ -88,7 +89,7 @@ class ShootingStar {
   }
 }
 
-// Painter untuk Bintang Jatuh
+// Painter untuk Bintang Jatuh (Tidak ada perubahan)
 class StarPainter extends CustomPainter {
   final List<ShootingStar> stars;
   final Animation<double> animation;
@@ -135,6 +136,31 @@ class StarPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
+// --- PERUBAHAN DIMULAI DARI SINI ---
+
+// BARU: Painter untuk efek kilat/petir
+class LightningPainter extends CustomPainter {
+  final double opacity;
+
+  LightningPainter({required this.opacity});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (opacity <= 0) return;
+    // Membuat kilatan putih di seluruh layar dengan opacity yang dianimasikan
+    final flashPaint = Paint()
+      ..color = Colors.white.withOpacity(opacity)
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), flashPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant LightningPainter oldDelegate) {
+    // Hanya repaint jika opacity berubah
+    return oldDelegate.opacity != opacity;
+  }
+}
+
 // Widget Utama untuk Background
 class WeatherBackground extends StatefulWidget {
   const WeatherBackground({super.key});
@@ -147,6 +173,12 @@ class _WeatherBackgroundState extends State<WeatherBackground>
     with TickerProviderStateMixin {
   late AnimationController _rainController;
   late AnimationController _starController;
+
+  // BARU: Controller dan animasi untuk kilat
+  late AnimationController _lightningController;
+  late Animation<double> _lightningAnimation;
+  Timer? _lightningTimer; // Timer untuk memicu kilat secara periodik
+
   List<RainParticle> rainParticles = [];
   List<ShootingStar> shootingStars = [];
 
@@ -162,6 +194,33 @@ class _WeatherBackgroundState extends State<WeatherBackground>
       duration: const Duration(seconds: 2),
     )..repeat();
 
+    // BARU: Inisialisasi controller dan animasi kilat
+    _lightningController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200), // Durasi kilat yang cepat
+    );
+    // Animasikan opacity dari 0 ke 0.6 (agak transparan) lalu kembali ke 0
+    _lightningAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.6), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.6, end: 0.0), weight: 1),
+    ]).animate(_lightningController);
+
+    // BARU: Cek jika kondisi hujan deras untuk memulai timer kilat
+    final isHeavyRain =
+        DummyData.weatherCondition.toLowerCase() == 'heavy rain';
+    final isDarkMode =
+        Provider.of<ThemeProvider>(context, listen: false).themeMode ==
+        ThemeMode.dark;
+
+    if (isHeavyRain && isDarkMode) {
+      // Memicu kilat setiap 5-10 detik secara acak
+      _lightningTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+        if (mounted && (Random().nextBool() || Random().nextBool())) {
+          _lightningController.forward(from: 0.0);
+        }
+      });
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final size = MediaQuery.of(context).size;
       rainParticles = List.generate(100, (_) => RainParticle(size));
@@ -174,27 +233,59 @@ class _WeatherBackgroundState extends State<WeatherBackground>
   void dispose() {
     _rainController.dispose();
     _starController.dispose();
+    _lightningController.dispose(); // Hapus controller kilat
+    _lightningTimer?.cancel(); // Hentikan timer
     super.dispose();
+  }
+
+  // BARU: Fungsi helper untuk memilih gradien latar belakang
+  LinearGradient _getBackgroundGradient(bool isDarkMode, bool isOvercast) {
+    if (isDarkMode) {
+      // Gradien untuk mode malam (tidak berubah)
+      return const LinearGradient(
+        colors: [Color(0xFF1a237e), Colors.black],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      );
+    } else {
+      if (isOvercast) {
+        // Gradien BARU untuk kondisi mendung/hujan di siang hari
+        return LinearGradient(
+          colors: [Colors.blueGrey.shade300, Colors.blueGrey.shade700],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        );
+      } else {
+        // Gradien cerah untuk siang hari (default)
+        return LinearGradient(
+          colors: [Colors.lightBlue.shade200, Colors.white],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
-    final isRaining = DummyData.weatherCondition.toLowerCase().contains('rain');
+
+    // Memperbarui logika kondisi cuaca
+    final weatherCondition = DummyData.weatherCondition.toLowerCase();
+    final isRaining = weatherCondition.contains('rain');
+    final isHeavyRain = weatherCondition == 'heavy rain';
+    final isCloudy = weatherCondition == 'cloudy';
+    final isOvercast =
+        isRaining ||
+        isCloudy; // Kondisi dianggap mendung jika hujan atau berawan
 
     return Stack(
       children: [
-        // Gradien Latar Belakang
+        // Gradien Latar Belakang yang Dinamis
         Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isDarkMode
-                  ? [const Color(0xFF1a237e), Colors.black]
-                  : [Colors.lightBlue.shade200, Colors.white],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            gradient: _getBackgroundGradient(isDarkMode, isOvercast),
           ),
         ),
         // Animasi Hujan
@@ -215,7 +306,20 @@ class _WeatherBackgroundState extends State<WeatherBackground>
             ),
             child: Container(),
           ),
+
+        // BARU: Animasi Kilat
+        if (isDarkMode && isHeavyRain)
+          AnimatedBuilder(
+            animation: _lightningAnimation,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: LightningPainter(opacity: _lightningAnimation.value),
+                child: Container(),
+              );
+            },
+          ),
       ],
     );
   }
 }
+
