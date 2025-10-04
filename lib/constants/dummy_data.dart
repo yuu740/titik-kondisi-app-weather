@@ -1,14 +1,24 @@
+import 'dart:math';
+
 class DummyData {
-  static const String location = 'South Tangerang, Banten';
-  static const String date =
-      'Friday, 03 October 2025 - 21:29'; // Updated to current date/time
+  // Daftar kondisi cuaca untuk dipilih secara acak
+  static final List<String> _weatherConditions = [
+    'Light rain',
+    'Heavy rain',
+    'Clear',
+    'Cloudy',
+  ];
+
+  // Inisialisasi data cuaca dengan nilai acak
+  static final String weatherCondition =
+      _weatherConditions[Random().nextInt(_weatherConditions.length)];
+
   static const double temperature = 29.0;
-  static const String weatherCondition = 'Light rain';
   static const int aqi = 38;
   static const int uv = 0;
   static const int humidity = 72;
   static const String rainPrediction =
-      'Hujan deras diperkirakan dalam 15 menit di area Anda. Siapkan payung!';
+      'Hujan deras mungkin terjadi sore ini. Tetap waspada!';
   static const double observationScore = 9.1;
   static const int cloudCover = 5;
   static const String moonPhase = 'Baru';
