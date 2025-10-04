@@ -1,6 +1,5 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class LocationService {
   // Mendapatkan lokasi saat ini
@@ -23,7 +22,8 @@ class LocationService {
     );
   }
 
-  // Mengubah koordinat menjadi alamat yang bisa dibaca
+  // --- FUNGSI INI YANG DIMODIFIKASI ---
+  // Mengubah koordinat menjadi alamat yang lebih spesifik
   Future<String> getAddressFromCoordinates(
     double latitude,
     double longitude,
@@ -35,13 +35,35 @@ class LocationService {
       );
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
-        // Format: "Nama Kota, Provinsi"
-        return "${place.subAdministrativeArea}, ${place.administrativeArea}";
+
+        // Membangun string alamat yang lebih detail
+        // Prioritas: Nama Jalan > Kelurahan/Daerah > Kecamatan > Kota
+        String address = "";
+
+        if (place.thoroughfare != null && place.thoroughfare!.isNotEmpty) {
+          address += "${place.thoroughfare}, ";
+        }
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          address += "${place.subLocality}, ";
+        }
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          address += "${place.locality}";
+        } else if (place.subAdministrativeArea != null &&
+            place.subAdministrativeArea!.isNotEmpty) {
+          address += "${place.subAdministrativeArea}";
+        }
+
+        // Membersihkan koma di akhir jika ada
+        if (address.endsWith(", ")) {
+          address = address.substring(0, address.length - 2);
+        }
+
+        return address.isNotEmpty ? address : "Lokasi tidak diketahui";
       }
       return "Lokasi tidak ditemukan";
     } catch (e) {
+      print("Error getting address: $e"); // Tambahkan print untuk debug
       return "Gagal mendapatkan nama lokasi";
     }
   }
 }
-
