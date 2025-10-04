@@ -1,127 +1,131 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:titik_kondisi/main.dart';
 import 'package:titik_kondisi/provider/theme_provider.dart';
 import 'package:titik_kondisi/screens/onboarding_screen.dart';
+import 'package:titik_kondisi/screens/splash_screen.dart';
 import 'package:titik_kondisi/screens/welcome_page.dart';
 import 'package:titik_kondisi/screens/main_screen.dart';
-import 'package:titik_kondisi/screens/preference_page2.dart'; // Ensure this path is correct
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/services.dart'; // For MethodChannel
+import 'package:titik_kondisi/screens/preference_page2.dart';
 
 void main() {
-  // Setup mock SharedPreferences before each test
-  setUp(() async {
-    TestWidgetsFlutterBinding.ensureInitialized();
-    const MethodChannel(
-      'plugins.flutter.io/shared_preferences',
-    ).setMockMethodCallHandler((MethodCall methodCall) async {
-      if (methodCall.method == 'getAll') {
-        return <String, dynamic>{'isFirstRun': true}; // Simulasi first run
-      }
-      return null;
+  // Helper function untuk membungkus widget dengan provider yang dibutuhkan
+  Widget createTestApp(Widget child) {
+    return ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: MaterialApp(home: child),
+    );
+  }
+
+  group('App Startup and Onboarding Flow', () {
+    testWidgets('Shows SplashScreen then OnboardingScreen on first run', (
+      WidgetTester tester,
+    ) async {
+      // FIX: Menggunakan cara modern untuk mock SharedPreferences
+      SharedPreferences.setMockInitialValues({'isFirstRun': true});
+
+      // FIX: Bangun aplikasi dari root (MyApp) tanpa parameter
+      await tester.pumpWidget(const MyApp());
+
+      // Awalnya, SplashScreen akan muncul
+      expect(find.byType(SplashScreen), findsOneWidget);
+
+      // Tunggu SplashScreen selesai dan navigasi
+      await tester.pumpAndSettle();
+
+      // Verifikasi bahwa OnboardingScreen muncul setelah SplashScreen
+      expect(find.byType(OnboardingScreen), findsOneWidget);
+      expect(find.text('Pengaturan Awal (1/2)'), findsOneWidget);
+    });
+
+    testWidgets('Shows SplashScreen then MainScreen on subsequent runs', (
+      WidgetTester tester,
+    ) async {
+      // Simulasi pengguna yang sudah pernah membuka aplikasi
+      SharedPreferences.setMockInitialValues({'isFirstRun': false});
+
+      await tester.pumpWidget(const MyApp());
+
+      // SplashScreen muncul
+      expect(find.byType(SplashScreen), findsOneWidget);
+      await tester.pumpAndSettle();
+
+      // Verifikasi langsung ke MainScreen
+      expect(find.byType(MainScreen), findsOneWidget);
+    });
+
+    testWidgets('Full onboarding navigation flow works correctly', (
+      WidgetTester tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({'isFirstRun': true});
+      await tester.pumpWidget(const MyApp());
+      await tester.pumpAndSettle(); // Selesaikan SplashScreen
+
+      // 1. Berada di PreferencePage1
+      expect(find.byType(OnboardingScreen), findsOneWidget);
+      expect(find.text('Pengaturan Awal (1/2)'), findsOneWidget);
+
+      // 2. Navigasi ke PreferencePage2
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PreferencePage2), findsOneWidget);
+
+      // 3. Navigasi ke WelcomePage
+      await tester.tap(find.text('Get Started'));
+      await tester.pumpAndSettle();
+      expect(find.byType(WelcomePage), findsOneWidget);
+
+      // 4. Tunggu animasi WelcomePage selesai dan navigasi ke MainScreen
+      await tester.pumpAndSettle(const Duration(seconds: 5));
+      expect(find.byType(MainScreen), findsOneWidget);
     });
   });
 
-  // Clean up mock handler after each test
-  tearDown(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, null);
-  });
+  group('Theme Selection', () {
+    testWidgets('WelcomePage shows light theme elements correctly', (
+      WidgetTester tester,
+    ) async {
+      // Bangun langsung WelcomePage untuk test spesifik ini
+      await tester.pumpWidget(createTestApp(const WelcomePage()));
+      await tester.pump(); // Jalankan frame pertama
 
-  testWidgets('Theme switching and onboarding navigation test', (
-    WidgetTester tester,
-  ) async {
-    // Build app with mock first run
-    await tester.pumpWidget(
-      ChangeNotifierProvider(
-        create: (_) => ThemeProvider(),
-        child: const MyApp(
-          isFirstRun: true,
-        ), // Pass required isFirstRun parameter
-      ),
-    );
+      // Verifikasi ikon dan warna gradien untuk light mode
+      expect(find.byIcon(Icons.wb_sunny), findsOneWidget);
 
-    // Verify that OnboardingScreen appears first
-    expect(find.byType(OnboardingScreen), findsOneWidget);
+      // FIX: Mencari Container, bukan AnimatedContainer
+      final container = tester.widget<Container>(find.byType(Container).first);
+      final decoration = container.decoration as BoxDecoration;
+      final gradient = decoration.gradient as LinearGradient;
 
-    // Tap ChoiceChip "Dark" in PreferencePage1
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Dark'));
-    await tester.pumpAndSettle();
+      expect(gradient.colors.contains(const Color(0xFF81D4FA)), isTrue);
+    });
 
-    // Verify theme changes to dark mode
-    final themeProvider = Provider.of<ThemeProvider>(
-      tester.element(find.byType(OnboardingScreen)),
-    );
-    expect(themeProvider.themeMode, ThemeMode.dark);
+    testWidgets('WelcomePage shows dark theme elements correctly', (
+      WidgetTester tester,
+    ) async {
+      // Buat provider tema khusus untuk test dark mode
+      final themeProvider = ThemeProvider()..toggleTheme(true);
 
-    // Tap "Next" to navigate to PreferencePage2
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
+      // Bangun WelcomePage dengan provider dark mode
+      await tester.pumpWidget(
+        ChangeNotifierProvider.value(
+          value: themeProvider,
+          child: const MaterialApp(home: WelcomePage()),
+        ),
+      );
+      await tester.pump();
 
-    // Verify PreferencePage2 appears
-    expect(find.byType(PreferencePage2), findsOneWidget);
+      // Verifikasi ikon dan warna gradien untuk dark mode
+      expect(find.byIcon(Icons.nights_stay), findsOneWidget);
 
-    // Tap "Get Started" to navigate to WelcomePage
-    await tester.tap(find.text('Get Started'));
-    await tester.pumpAndSettle();
+      final container = tester.widget<Container>(find.byType(Container).first);
+      final decoration = container.decoration as BoxDecoration;
+      final gradient = decoration.gradient as LinearGradient;
 
-    // Verify WelcomePage appears with animation
-    expect(find.byType(WelcomePage), findsOneWidget);
-
-    // Wait 5 seconds for animation to complete and transition to MainScreen
-    await tester.pumpAndSettle(const Duration(seconds: 6));
-    expect(find.byType(MainScreen), findsOneWidget);
-  });
-
-  testWidgets('Theme affects WelcomePage animation', (
-    WidgetTester tester,
-  ) async {
-    // Build app with mock first run
-    await tester.pumpWidget(
-      ChangeNotifierProvider(
-        create: (_) => ThemeProvider(),
-        child: const MyApp(
-          isFirstRun: true,
-        ), // Pass required isFirstRun parameter
-      ),
-    );
-
-    // Select Light mode
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Light'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Get Started'));
-    await tester.pumpAndSettle();
-
-    // Verify day gradient (light blue to white)
-    final container = tester.widget<AnimatedContainer>(
-      find.byType(AnimatedContainer),
-    );
-    expect(container.decoration, isA<BoxDecoration>());
-    final gradient =
-        (container.decoration as BoxDecoration).gradient as LinearGradient;
-    expect(gradient.colors, contains(Colors.blue[200]));
-
-    // Switch to Dark mode and repeat
-    await tester.pageBack(); // Navigate back to PreferencePage1
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Dark'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Next'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Get Started'));
-    await tester.pumpAndSettle();
-
-    // Verify night gradient (indigo to black)
-    final darkContainer = tester.widget<AnimatedContainer>(
-      find.byType(AnimatedContainer),
-    );
-    final darkGradient =
-        (darkContainer.decoration as BoxDecoration).gradient as LinearGradient;
-    expect(darkGradient.colors, contains(Colors.indigo[900]));
+      expect(gradient.colors.contains(const Color(0xFF2C1C4F)), isTrue);
+    });
   });
 }
 

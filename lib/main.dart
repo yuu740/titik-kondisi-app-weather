@@ -1,32 +1,24 @@
+// main.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import './screens/onboarding_screen.dart';
-import './screens/welcome_page.dart';
+import './screens/splash_screen.dart'; // MODIFIED: Import splash screen
 import './provider/theme_provider.dart';
 import './themes/themes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  final isFirstRun = prefs.getBool('isFirstRun') ?? true;
-  final savedTheme =
-      prefs.getBool('isDarkMode') ?? false; // Ambil tema yang disimpan
-
+  // Pengecekan isFirstRun dipindahkan ke SplashScreen
   runApp(
     ChangeNotifierProvider(
-      create: (_) =>
-          ThemeProvider()
-            ..setTheme(savedTheme), // Set tema berdasarkan penyimpanan
-      child: MyApp(isFirstRun: isFirstRun),
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  final bool isFirstRun;
-
-  const MyApp({super.key, required this.isFirstRun});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +29,9 @@ class MyApp extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      home: isFirstRun ? const OnboardingScreen() : const WelcomePage(),
+      debugShowCheckedModeBanner: false,
+      // FIX: Home sekarang selalu SplashScreen
+      home: const SplashScreen(),
     );
   }
 }

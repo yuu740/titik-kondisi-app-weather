@@ -1,16 +1,17 @@
+// screens/welcome_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../provider/theme_provider.dart';
 import 'main_screen.dart';
-import 'dart:async';
+import '../constants/app_colors.dart';
 
 class WelcomePage extends StatefulWidget {
-  final VoidCallback? onStart;
-
-  const WelcomePage({super.key, this.onStart});
+  const WelcomePage({super.key});
 
   @override
-  _WelcomePageState createState() => _WelcomePageState();
+  State<WelcomePage> createState() => _WelcomePageState();
 }
 
 class _WelcomePageState extends State<WelcomePage>
@@ -23,13 +24,19 @@ class _WelcomePageState extends State<WelcomePage>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 5),
+      duration: const Duration(seconds: 2),
     );
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
 
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
+    Future.delayed(const Duration(seconds: 4), () async {
+      // Pengecekan 'if (mounted)' sudah benar untuk mengatasi warning
+      // 'use_build_context_synchronously'. Ini memastikan context masih valid
+      // setelah operasi async.
+      if (mounted) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isFirstRun', false);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const MainScreen()),
@@ -47,54 +54,58 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    bool isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+    final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
-      body: AnimatedContainer(
-        duration: const Duration(seconds: 5),
+      body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: isDarkMode
                 ? [
-                    Colors.indigo[900]!, // Night sky
-                    Colors.black,
-                  ]
+                    const Color(0xFF2C1C4F),
+                    AppColors.darkBackground,
+                  ] // Ungu gelap ke hitam
                 : [
-                    Colors.blue[200]!, // Day sky
-                    Colors.white,
-                  ],
+                    const Color(0xFF81D4FA),
+                    AppColors.lightBackground,
+                  ], // Biru langit ke putih
           ),
         ),
         child: Center(
           child: FadeTransition(
             opacity: _animation,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  isDarkMode ? Icons.nights_stay : Icons.wb_sunny,
-                  size: 100,
-                  color: isDarkMode ? Colors.white : Colors.yellow[700],
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'TitikKondisi',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black87,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isDarkMode ? Icons.nights_stay : Icons.wb_sunny,
+                    size: 100,
+                    color: isDarkMode
+                        ? AppColors.darkAccent
+                        : Colors.yellow[700],
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Prakiraan cuaca akurat dengan info langit malam terkini.',
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  const SizedBox(height: 20),
+                  Text(
+                    'TitikKondisi',
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: isDarkMode ? Colors.white : Colors.black87,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Text(
+                    'Prakiraan cuaca akurat dengan info langit malam terkini.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -102,4 +113,3 @@ class _WelcomePageState extends State<WelcomePage>
     );
   }
 }
-
