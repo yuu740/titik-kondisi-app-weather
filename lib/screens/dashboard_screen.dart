@@ -1,306 +1,392 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../constants/dummy_data.dart';
+import '../provider/location_provider.dart';
+import '../provider/setting_provider.dart';
 import '../widgets/animated_fade_slide.dart';
 
-// NEW: Ubah menjadi StatefulWidget untuk animasi
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
-
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  void _showSearchDialog(BuildContext context) async {
+    final locationProvider = Provider.of<LocationProvider>(
+      context,
+      listen: false,
+    );
+    final TextEditingController controller = TextEditingController();
+
+    String? result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pilih Lokasi Manual'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Masukkan nama kota'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                Navigator.pop(context, controller.text);
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      locationProvider.setManualLocation(result, null);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
+    final locationProvider = Provider.of<LocationProvider>(context);
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+    final formattedDate = DateFormat(
+      'EEEE, dd MMMM yyyy - HH:mm',
+      'id_ID',
+    ).format(DateTime.now());
 
-    // NEW: Gunakan LayoutBuilder untuk responsivitas
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isLandscape = constraints.maxWidth > 600;
+    double temp = DummyData.temperature;
+    String unit = "°C";
+    if (!settingsProvider.isCelsius) {
+      temp = (temp * 9 / 5) + 32;
+      unit = "°F";
+    }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // NEW: Tambahkan animasi pada setiap widget
-              _AnimatedFadeSlide(
-                delay: 100,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      DummyData.rainPrediction,
-                      style: theme.textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      DummyData.location,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              // NEW: Logika untuk layout landscape vs portrait
-              isLandscape
-                  ? Row(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: const Text("Dashboard"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          bool isWideScreen = constraints.maxWidth > 650;
+
+          if (isWideScreen) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(child: _buildWeatherCard(theme)),
-                        const SizedBox(width: 16),
-                        Expanded(child: _buildInfoChips(theme)),
+                        _buildHeader(theme, locationProvider),
+                        const SizedBox(height: 16),
+                        _buildWeatherCard(theme, formattedDate, temp, unit),
                       ],
-                    )
-                  : Column(
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildWeatherCard(theme),
-                        const SizedBox(height: 20),
-                        _buildInfoChips(theme),
+                        _buildWeatherDetailsGrid(context),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Prediksi Hujan 6 Jam ke Depan',
+                          style: theme.textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildRainForecast(context),
                       ],
                     ),
-              const SizedBox(height: 30),
-              _AnimatedFadeSlide(
-                delay: 400,
-                child: Text(
-                  'Prediksi Hujan 6 Jam ke Depan',
-                  style: theme.textTheme.titleLarge,
-                ),
-              ),
-              const SizedBox(height: 10),
-              _AnimatedFadeSlide(
-                delay: 500,
-                child: Container(
-                  height: 120,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: DummyData.hourlyRain.asMap().entries.map((entry) {
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(
-                            width: constraints.maxWidth / 12,
-                            height: entry.value * 100,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  theme.primaryColor.withOpacity(0.5),
-                                  theme.primaryColor,
-                                ],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                              ),
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(6),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${entry.key + 1}h',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ],
-                      );
-                    }).toList(),
                   ),
                 ),
+              ],
+            );
+          } else {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(theme, locationProvider),
+                  const SizedBox(height: 16),
+                  _buildWeatherCard(theme, formattedDate, temp, unit),
+                  const SizedBox(height: 24),
+                  _buildWeatherDetailsGrid(context),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Prediksi Hujan 6 Jam ke Depan',
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildRainForecast(context),
+                ],
               ),
-              const SizedBox(height: 30),
-              _AnimatedFadeSlide(
-                delay: 600,
-                child: Text(
-                  'Peta Polusi Cahaya',
-                  style: theme.textTheme.titleLarge,
-                ),
-              ),
-              const SizedBox(height: 10),
-              _AnimatedFadeSlide(
-                delay: 700,
-                child: Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: const NetworkImage(
-                          'https://www.lightpollutionmap.info/images/lp_map.jpg',
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildHeader(ThemeData theme, LocationProvider locationProvider) {
+    return AnimatedFadeSlide(
+      delay: 100,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(DummyData.rainPrediction, style: theme.textTheme.headlineSmall),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.location_on, color: Colors.grey[600], size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: locationProvider.isLoading
+                    ? const Text("Memuat lokasi...")
+                    : Text(
+                        locationProvider.currentLocationName ??
+                            "Lokasi tidak diketahui",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.grey,
                         ),
-                        fit: BoxFit.cover,
-                        colorFilter: ColorFilter.mode(
-                          Colors.black.withOpacity(0.4),
-                          BlendMode.darken,
-                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Light Pollution Map',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_location_alt_outlined, size: 20),
+                onPressed: () => _showSearchDialog(context),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeatherCard(
+    ThemeData theme,
+    String date,
+    double temp,
+    String unit,
+  ) {
+    return AnimatedFadeSlide(
+      delay: 200,
+      child: Card(
+        elevation: 4,
+        shadowColor: theme.primaryColor.withOpacity(0.2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                date,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '${temp.toStringAsFixed(1)}$unit',
+                  style: theme.textTheme.displayMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                DummyData.weatherCondition,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeatherDetailsGrid(BuildContext context) {
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 250,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 2.5,
+      ),
+      itemCount: 4,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemBuilder: (context, index) {
+        final items = [
+          _InfoCard(
+            icon: Icons.air,
+            label: 'AQI',
+            value: DummyData.aqi.toString(),
+            color: Colors.green,
+          ),
+          _InfoCard(
+            icon: Icons.wb_sunny_outlined,
+            label: 'UV Index',
+            value: DummyData.uv.toString(),
+            color: Colors.orange,
+          ),
+          _InfoCard(
+            icon: Icons.water_drop_outlined,
+            label: 'Humidity',
+            value: '${DummyData.humidity}%',
+            color: Colors.lightBlue,
+          ),
+          _InfoCard(
+            icon: Icons.cloud_outlined,
+            label: 'Cloud Cover',
+            value: '${DummyData.cloudCover}%',
+            color: Colors.grey,
+          ),
+        ];
+        return AnimatedFadeSlide(
+          delay: 300 + (index * 50),
+          child: items[index],
         );
       },
     );
   }
 
-  // NEW: Ekstrak widget untuk kerapian
-  Widget _buildWeatherCard(ThemeData theme) {
-    return _AnimatedFadeSlide(
-      delay: 200,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Center(
-            child: Column(
+  // FIX: Mengganti Row dengan ListView horizontal untuk mengatasi overflow
+  Widget _buildRainForecast(BuildContext context) {
+    final theme = Theme.of(context);
+    return AnimatedFadeSlide(
+      delay: 500,
+      child: Container(
+        height: 130, // Sedikit menambah tinggi untuk padding
+        decoration: BoxDecoration(
+          color: theme.cardColor.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
+        ),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          itemCount: DummyData.hourlyRain.length,
+          separatorBuilder: (context, index) => const SizedBox(width: 24),
+          itemBuilder: (context, index) {
+            final entry = DummyData.hourlyRain.asMap().entries.elementAt(index);
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(DummyData.date, style: theme.textTheme.bodyMedium),
-                const SizedBox(height: 10),
                 Text(
-                  '${DummyData.temperature}°C',
-                  style: theme.textTheme.displayMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.primaryColor,
+                  '${(entry.value * 100).toInt()}%',
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 4),
+                Expanded(
+                  child: Container(
+                    width: 35, // Lebar bar
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: 35,
+                      height: entry.value * 60, // Ketinggian bar dinamis
+                      decoration: BoxDecoration(
+                        color: theme.primaryColor,
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(6),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                Text(
-                  DummyData.weatherCondition,
-                  style: theme.textTheme.titleLarge,
-                ),
+                const SizedBox(height: 4),
+                Text('${entry.key + 1}h', style: theme.textTheme.bodySmall),
               ],
-            ),
-          ),
+            );
+          },
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoChips(ThemeData theme) {
-    return _AnimatedFadeSlide(
-      delay: 300,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _InfoChip(label: 'AQI', value: DummyData.aqi.toString()),
-          const SizedBox(height: 12),
-          _InfoChip(label: 'UV', value: DummyData.uv.toString()),
-          const SizedBox(height: 12),
-          _InfoChip(label: 'Humidity', value: '${DummyData.humidity}%'),
-        ],
       ),
     );
   }
 }
 
-class _InfoChip extends StatelessWidget {
+class _InfoCard extends StatelessWidget {
+  final IconData icon;
   final String label;
   final String value;
-  const _InfoChip({required this.label, required this.value});
+  final Color color;
+
+  const _InfoCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            color: theme.cardColor.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.primaryColor.withOpacity(0.2)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: theme.textTheme.bodyLarge),
-              Text(
-                value,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+    return Card(
+      elevation: 0,
+      color: color.withOpacity(0.15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: theme.textTheme.bodyMedium,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    value,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// NEW: Widget helper untuk animasi
-class _AnimatedFadeSlide extends StatefulWidget {
-  final Widget child;
-  final int delay;
-
-  const _AnimatedFadeSlide({required this.child, this.delay = 0});
-
-  @override
-  State<_AnimatedFadeSlide> createState() => _AnimatedFadeSlideState();
-}
-
-class _AnimatedFadeSlideState extends State<_AnimatedFadeSlide>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(_controller);
-
-    Future.delayed(Duration(milliseconds: widget.delay), () {
-      if (mounted) {
-        _controller.forward();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(position: _slideAnimation, child: widget.child),
-    );
-  }
-}
