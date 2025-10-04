@@ -1,5 +1,3 @@
-// screens/welcome_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,13 +28,11 @@ class _WelcomePageState extends State<WelcomePage>
     _controller.forward();
 
     Future.delayed(const Duration(seconds: 4), () async {
-      // Pengecekan 'if (mounted)' sudah benar untuk mengatasi warning
-      // 'use_build_context_synchronously'. Ini memastikan context masih valid
-      // setelah operasi async.
       if (mounted) {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isFirstRun', false);
-
+        if (prefs.getBool('isFirstRun') ?? true) {
+          await prefs.setBool('isFirstRun', false);
+        }
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const MainScreen()),
@@ -57,52 +53,46 @@ class _WelcomePageState extends State<WelcomePage>
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
-      body: Container(
+      body: AnimatedContainer(
+        duration: const Duration(seconds: 5),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: isDarkMode
-                ? [
-                    const Color(0xFF2C1C4F),
-                    AppColors.darkBackground,
-                  ] // Ungu gelap ke hitam
-                : [
-                    const Color(0xFF81D4FA),
-                    AppColors.lightBackground,
-                  ], // Biru langit ke putih
+                ? [Colors.purple[900]!, Colors.black]
+                : [Colors.blue[200]!, Colors.white],
           ),
         ),
-        child: Center(
-          child: FadeTransition(
-            opacity: _animation,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: FadeTransition(
+              opacity: _animation,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     isDarkMode ? Icons.nights_stay : Icons.wb_sunny,
                     size: 100,
-                    color: isDarkMode
-                        ? AppColors.darkAccent
-                        : Colors.yellow[700],
+                    color: isDarkMode ? Colors.white : Colors.yellow[700],
                   ),
                   const SizedBox(height: 20),
                   Text(
                     'TitikKondisi',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      color: isDarkMode ? Colors.white : Colors.black87,
+                    style: TextStyle(
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 10),
                   Text(
                     'Prakiraan cuaca akurat dengan info langit malam terkini.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    style: TextStyle(
                       color: isDarkMode ? Colors.white70 : Colors.black54,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -113,3 +103,4 @@ class _WelcomePageState extends State<WelcomePage>
     );
   }
 }
+
