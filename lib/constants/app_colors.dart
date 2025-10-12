@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppColors {
   // Light Theme Colors
   static const Color lightPrimary = Color(0xFF4A90E2); // Biru primer
-  static const Color lightAccent = Color(0xFF50E3C2); // Aksen toska/hijau
+  static const Color lightAccent = Color(0xFF4A90E2); // Aksen toska/hijau
   static const Color lightBackground = Color(0xFFF4F6F8);
   static const Color lightText = Color(0xFF121212);
   static const Color lightCard = Colors.white;
