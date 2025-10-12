@@ -1,9 +1,8 @@
-// screens/onboarding_screen.dart
-
 import 'package:flutter/material.dart';
 import 'preference_page1.dart';
 import 'preference_page2.dart';
-import 'welcome_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'main_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -25,7 +24,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const NeverScrollableScrollPhysics(), // Agar tidak bisa di-swipe
         onPageChanged: (index) => setState(() => _currentPage = index),
 
-        children: [PreferencePage1(), PreferencePage2(), const WelcomePage()],
+        children: [PreferencePage1(), PreferencePage2()],
       ),
       bottomNavigationBar: _currentPage < 2
           ? BottomAppBar(
@@ -46,11 +45,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     const Spacer(), // Untuk mendorong tombol Next ke kanan
                     ElevatedButton(
-                      onPressed: () {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.ease,
-                        );
+                      onPressed: () async {
+                        if (_currentPage == 1) {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('isFirstRun', false);
+
+                          if (mounted) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const MainScreen(),
+                              ),
+                            );
+                          }
+                        } else {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.ease,
+                          );
+                        }
                       },
                       child: Text(_currentPage == 1 ? 'Get Started' : 'Next'),
                     ),

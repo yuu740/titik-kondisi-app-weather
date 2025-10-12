@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/theme_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../provider/setting_provider.dart';
 
 class PreferencePage1 extends StatefulWidget {
   const PreferencePage1({super.key});
@@ -11,15 +12,7 @@ class PreferencePage1 extends StatefulWidget {
 }
 
 class _PreferencePage1State extends State<PreferencePage1> {
-  bool? _isNotificationEnabled;
   bool? _isLocationAutomatic;
-
-  Future<void> _requestNotificationPermission() async {
-    final status = await Permission.notification.request();
-    if (mounted) {
-      setState(() => _isNotificationEnabled = status.isGranted);
-    }
-  }
 
   Future<void> _requestLocationPermission() async {
     final status = await Permission.location.request();
@@ -31,7 +24,7 @@ class _PreferencePage1State extends State<PreferencePage1> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-
+    final settingsProvider = Provider.of<SettingsProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pengaturan Awal (1/2)'),
@@ -91,18 +84,24 @@ class _PreferencePage1State extends State<PreferencePage1> {
                   _buildChoiceChip(
                     context: context,
                     label: 'Ya, tentu',
-                    isSelected: _isNotificationEnabled == true,
-                    onSelected: (selected) {
-                      if (selected) _requestNotificationPermission();
+                    isSelected: settingsProvider.notifications,
+                    onSelected: (selected) async {
+                      if (selected) {
+                        final status = await Permission.notification.request();
+                        if (mounted) {
+                          settingsProvider.setNotifications(status.isGranted);
+                        }
+                      }
                     },
                   ),
                   _buildChoiceChip(
                     context: context,
                     label: 'Tidak',
-                    isSelected: _isNotificationEnabled == false,
+                    isSelected: !settingsProvider.notifications,
                     onSelected: (selected) {
-                      if (selected)
-                        setState(() => _isNotificationEnabled = false);
+                      if (selected) {
+                        settingsProvider.setNotifications(false);
+                      }
                     },
                   ),
                 ],

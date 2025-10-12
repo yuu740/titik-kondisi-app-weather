@@ -4,6 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../provider/theme_provider.dart';
 import 'main_screen.dart';
 import '../constants/app_colors.dart';
+import './onboarding_screen.dart';
+import './auth_screen.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -26,19 +29,42 @@ class _WelcomePageState extends State<WelcomePage>
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
+    _checkAuthAndNavigate();
+  }
 
-    Future.delayed(const Duration(seconds: 4), () async {
-      if (mounted) {
-        final prefs = await SharedPreferences.getInstance();
-        if (prefs.getBool('isFirstRun') ?? true) {
-          await prefs.setBool('isFirstRun', false);
-        }
+  Future<void> _checkAuthAndNavigate() async {
+    // Beri sedikit jeda agar animasi splash screen terlihat
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (!mounted) return;
+
+    // Anggap kita punya service untuk cek token
+    const storage = FlutterSecureStorage();
+    final String? token = await storage.read(key: 'auth_token');
+
+    if (token != null) {
+      // Pengguna sudah login, sekarang cek apakah ini first run
+      final prefs = await SharedPreferences.getInstance();
+      final bool isFirstRun = prefs.getBool('isFirstRun') ?? true;
+
+      if (isFirstRun) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        );
+      } else {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const MainScreen()),
         );
       }
-    });
+    } else {
+      // Pengguna belum login, arahkan ke halaman autentikasi
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
+    }
   }
 
   @override
@@ -103,4 +129,3 @@ class _WelcomePageState extends State<WelcomePage>
     );
   }
 }
-
