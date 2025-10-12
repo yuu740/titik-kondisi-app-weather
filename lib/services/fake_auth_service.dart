@@ -1,8 +1,7 @@
-// services/fake_auth_service.dart
+import 'package:flutter/material.dart'; 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'package:flutter/material.dart'; // TAMBAHKAN INI
 
-// TAMBAHKAN 'with ChangeNotifier'
 class FakeAuthService with ChangeNotifier {
   bool _isLoggedIn = false;
   bool get isLoggedIn => _isLoggedIn;
@@ -10,12 +9,13 @@ class FakeAuthService with ChangeNotifier {
   Future<void> login() async {
     print('SIMULASI: Pengguna berhasil login.');
     _isLoggedIn = true;
-    notifyListeners(); // TAMBAHKAN INI untuk memberitahu UI
+    notifyListeners(); 
   }
 
   Future<void> logout() async {
     print('SIMULASI: Pengguna berhasil logout.');
+    await const FlutterSecureStorage().delete(key: 'auth_token');
     _isLoggedIn = false;
-    notifyListeners(); // TAMBAHKAN INI untuk memberitahu UI
+    notifyListeners();
   }
 }

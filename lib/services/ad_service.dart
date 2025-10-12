@@ -1,12 +1,10 @@
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:flutter/material.dart';
 
 class AdManager {
   InterstitialAd? _interstitialAd;
+  final String _adUnitId = 'ca-app-pub-3940256099942544/1033173712'; // ID Testing
 
-  // Gunakan ID testing dari AdMob selama pengembangan
-  final String _adUnitId = 'ca-app-pub-3940256099942544/1033173712';
-
-  // Memuat iklan di awal agar siap saat dibutuhkan
   void loadInterstitialAd() {
     InterstitialAd.load(
       adUnitId: _adUnitId,
@@ -14,30 +12,30 @@ class AdManager {
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitialAd = ad;
-          print('InterstitialAd loaded.');
         },
         onAdFailedToLoad: (LoadAdError error) {
-          print('InterstitialAd failed to load: $error');
+          _interstitialAd = null;
         },
       ),
     );
   }
 
-  // Menampilkan iklan jika sudah dimuat
-  void showInterstitialAd() {
+  // Modifikasi: Terima callback untuk dijalankan setelah iklan ditutup
+  void showInterstitialAd({required VoidCallback onAdDismissed}) {
     if (_interstitialAd == null) {
-      print('Warning: Interstitial ad is not loaded yet.');
+      onAdDismissed(); // Jika iklan gagal dimuat, langsung jalankan callback
       return;
     }
 
-    // Menangani event saat iklan ditampilkan
     _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
-        loadInterstitialAd(); // Muat iklan baru untuk sesi berikutnya
+        onAdDismissed(); // Jalankan callback di sini
+        loadInterstitialAd(); // Muat lagi untuk nanti
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();
+        onAdDismissed(); // Jalankan callback jika gagal tampil
         loadInterstitialAd();
       },
     );

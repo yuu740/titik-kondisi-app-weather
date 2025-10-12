@@ -1,4 +1,3 @@
-// screens/splash_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:titik_kondisi/provider/location_provider.dart';
 import 'main_screen.dart';
 import 'onboarding_screen.dart';
-import 'welcome_screen.dart'; // Ganti dari WelcomePage ke WelcomeScreen
+import 'welcome_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -23,36 +22,37 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _initializeAppAndNavigate() async {
-    // 1. Inisialisasi awal (jika ada)
+    // Inisialisasi awal
     await Provider.of<LocationProvider>(context, listen: false).fetchInitialLocation();
-    await Future.delayed(const Duration(seconds: 2)); // Jeda untuk splash
+    await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
-    // 2. Cek status login
+    // Cek status login
     const storage = FlutterSecureStorage();
-    final String? token = await storage.read(key: 'auth_token'); // Dummy token check
+    final String? token = await storage.read(key: 'auth_token');
 
     if (token != null) {
-      // User SUDAH LOGIN
+      // KASUS 1: Pengguna SUDAH LOGIN
       final prefs = await SharedPreferences.getInstance();
-      final bool isFirstRun = prefs.getBool('isFirstRunAfterLogin') ?? true;
+      final bool isFirstRunAfterLogin = prefs.getBool('isFirstRunAfterLogin') ?? true;
 
-      if (isFirstRun) {
-        // Jika login pertama kali, arahkan ke Onboarding
+      if (isFirstRunAfterLogin) {
+        // Jika ini login pertama, tampilkan halaman preferensi
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const OnboardingScreen()),
         );
       } else {
-        // Jika bukan login pertama kali, langsung ke Dashboard
+        // Jika sudah pernah login & set preferensi, langsung ke dashboard
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
         );
       }
     } else {
-      // User BELUM LOGIN, arahkan ke halaman welcome dengan tombol login
+      // KASUS 2: Pengguna BELUM LOGIN
+      // Arahkan ke halaman selamat datang dengan tombol login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const WelcomeScreen()),

@@ -10,6 +10,7 @@ import '../constants/dummy_data.dart';
 import '../services/fake_api_service.dart';
 import '../services/fake_auth_service.dart';
 
+import 'welcome_screen.dart'; 
 import './subs_screen.dart';
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -124,36 +125,7 @@ class SettingsScreen extends StatelessWidget {
         value: settingsProvider.astroReminder,
         onChanged: (value) => settingsProvider.setAstroReminder(value),
       ),
-      _buildSectionTitle('DEBUG (Hapus Nanti)', context),
-      Consumer<FakeAuthService>(
-        builder: (context, auth, child) {
-          return Column(
-            children: [
-              Text(
-                'Status Login: ${auth.isLoggedIn ? "Logged In" : "Logged Out"}',
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  await auth.login();
-                  // Muat ulang pengaturan setelah login
-                  context
-                      .read<SettingsProvider>()
-                      .reloadSettings(); // Anda perlu buat method reload ini
-                },
-                child: const Text('Simulasi Login'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  await auth.logout();
-                  // Muat ulang pengaturan setelah logout
-                  context.read<SettingsProvider>().reloadSettings();
-                },
-                child: const Text('Simulasi Logout'),
-              ),
-            ],
-          );
-        },
-      ),
+      
       _buildSectionTitle('Dukungan', context),
       Card(
         child: ListTile(
@@ -163,6 +135,40 @@ class SettingsScreen extends StatelessWidget {
           trailing: const Icon(Icons.chevron_right),
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionScreen()));
+          },
+        ),
+      ),
+      _buildSectionTitle('Akun', context),
+      Card(
+        color: Colors.red[50],
+        child: ListTile(
+          leading: Icon(Icons.logout, color: Colors.red[700]),
+          title: Text('Logout', style: TextStyle(color: Colors.red[700], fontWeight: FontWeight.bold)),
+          onTap: () async {
+            bool? confirmLogout = await showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Konfirmasi Logout'),
+                content: const Text('Apakah Anda yakin ingin keluar?'),
+                actions: [
+                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Batal')),
+                  TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Logout')),
+                ],
+              ),
+            );
+            if (confirmLogout == true) {
+              await context.read<FakeAuthService>().logout();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                (Route<dynamic> route) => false,
+              );
+            }
+
+            // Navigasi kembali ke WelcomeScreen dan hapus semua halaman sebelumnya
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+              (Route<dynamic> route) => false,
+            );
           },
         ),
       ),

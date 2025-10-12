@@ -8,35 +8,34 @@ class SubscriptionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subProvider = Provider.of<SubscriptionProvider>(context);
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dukung & Upgrade'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            if(subProvider.isPro)
-              Card(
-                color: Colors.green.withOpacity(0.2),
-                child: const ListTile(
-                  leading: Icon(Icons.check_circle, color: Colors.green),
-                  title: Text('Anda adalah Pengguna Pro!'),
-                  subtitle: Text('Terima kasih atas dukungan Anda.'),
-                ),
-              ),
-            const SizedBox(height: 20),
-            _buildProCard(context, theme, subProvider),
-            const SizedBox(height: 20),
-            _buildDonationCard(context, theme),
-          ],
-        ),
-      ),
+    // Gunakan Consumer agar UI otomatis update saat status berubah
+    return Consumer<SubscriptionProvider>(
+      builder: (context, subProvider, child) {
+        final theme = Theme.of(context);
+        return Scaffold(
+          appBar: AppBar(title: const Text('Dukung & Upgrade')),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                if (subProvider.isPro)
+                  Card(
+                    color: Colors.green.withOpacity(0.2),
+                    child: const ListTile(
+                      leading: Icon(Icons.check_circle, color: Colors.green),
+                      title: Text('Anda adalah Pengguna Pro!'),
+                      subtitle: Text('Terima kasih atas dukungan Anda.'),
+                    ),
+                  ),
+                const SizedBox(height: 20),
+                _buildProCard(context, theme, subProvider),
+                const SizedBox(height: 20),
+                _buildDonationCard(context, theme),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -69,16 +68,17 @@ class SubscriptionScreen extends StatelessWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: theme.primaryColor,
+                backgroundColor: subProvider.isPro ? Colors.grey : theme.primaryColor,
                 foregroundColor: theme.colorScheme.onPrimary,
               ),
-              onPressed: subProvider.isPro ? null : () {
-                subProvider.upgradeToPro();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Selamat! Anda sekarang pengguna Pro.'), backgroundColor: Colors.green)
-                );
+              onPressed: () {
+                if (subProvider.isPro) {
+                  subProvider.downgradeToFree();
+                } else {
+                  subProvider.upgradeToPro();
+                }
               },
-              child: Text(subProvider.isPro ? 'Sudah Berlangganan' : 'Upgrade ke Pro'),
+              child: Text(subProvider.isPro ? 'Nonaktifkan Pro (Simulasi)' : 'Upgrade ke Pro'),
             ),
           ],
         ),
