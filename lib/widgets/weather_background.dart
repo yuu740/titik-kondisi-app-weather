@@ -322,4 +322,3 @@ class _WeatherBackgroundState extends State<WeatherBackground>
     );
   }
 }
-

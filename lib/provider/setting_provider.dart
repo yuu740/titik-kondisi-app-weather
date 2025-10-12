@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import '../services/fake_api_service.dart';
+import '../services/fake_auth_service.dart';
 class SettingsProvider with ChangeNotifier {
   bool _isCelsius = true;
   bool _notifications = true;
@@ -14,17 +15,31 @@ class SettingsProvider with ChangeNotifier {
   bool get rainReminder => _rainReminder;
   bool get astroReminder => _astroReminder;
 
-  SettingsProvider() {
+  final FakeAuthService _authService;
+  final FakeApiService _apiService;
+
+  SettingsProvider(this._authService, this._apiService) {
     _loadSettings();
   }
-
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    _isCelsius = prefs.getBool('isCelsius') ?? true;
-    _notifications = prefs.getBool('notifications') ?? true;
-    _autoLocation = prefs.getBool('autoLocation') ?? true;
-    _rainReminder = prefs.getBool('rainReminder') ?? true;
-    _astroReminder = prefs.getBool('astroReminder') ?? false;
+    if (_authService.isLoggedIn) {
+      print("Status: Logged In. Memuat dari FAKE API.");
+      final userSettings = await _apiService.getSettings();
+      _isCelsius = userSettings['isCelsius'];
+      _notifications = userSettings['notifications'];
+      _autoLocation = userSettings['autoLocation'];
+      _rainReminder = userSettings['rainReminder'];
+      _astroReminder = userSettings['astroReminder'];
+    } else {
+      print("Status: Logged Out. Memuat dari SharedPreferences.");
+      final prefs = await SharedPreferences.getInstance();
+      _isCelsius = prefs.getBool('isCelsius') ?? true;
+      _notifications = prefs.getBool('notifications') ?? true;
+      _autoLocation = prefs.getBool('autoLocation') ?? true;
+      _rainReminder = prefs.getBool('rainReminder') ?? true;
+      _astroReminder = prefs.getBool('astroReminder') ?? false;
+    }
+
     notifyListeners();
   }
 
@@ -32,6 +47,15 @@ class SettingsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(key, value);
     notifyListeners();
+    if (_authService.isLoggedIn) {
+      await _apiService.updateSettings({key: value});
+    }
+  }
+
+  Future<void> reloadSettings() async {
+    print("Memuat ulang pengaturan berdasarkan status auth...");
+    // Cukup panggil kembali method internal _loadSettings
+    await _loadSettings();
   }
 
   void toggleTemperatureUnit(bool value) {

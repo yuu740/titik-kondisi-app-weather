@@ -6,7 +6,7 @@ import 'package:titik_kondisi/main.dart';
 import 'package:titik_kondisi/provider/theme_provider.dart';
 import 'package:titik_kondisi/screens/onboarding_screen.dart';
 import 'package:titik_kondisi/screens/splash_screen.dart';
-import 'package:titik_kondisi/screens/welcome_page.dart';
+import 'package:titik_kondisi/screens/welcome_screen.dart';
 import 'package:titik_kondisi/screens/main_screen.dart';
 import 'package:titik_kondisi/screens/preference_page2.dart';
 
@@ -75,7 +75,7 @@ void main() {
       // 3. Navigasi ke WelcomePage
       await tester.tap(find.text('Get Started'));
       await tester.pumpAndSettle();
-      expect(find.byType(WelcomePage), findsOneWidget);
+      expect(find.byType(WelcomeScreen), findsOneWidget);
 
       // 4. Tunggu animasi WelcomePage selesai dan navigasi ke MainScreen
       await tester.pumpAndSettle(const Duration(seconds: 5));
@@ -88,7 +88,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Bangun langsung WelcomePage untuk test spesifik ini
-      await tester.pumpWidget(createTestApp(const WelcomePage()));
+      await tester.pumpWidget(createTestApp(const WelcomeScreen()));
       await tester.pump(); // Jalankan frame pertama
 
       // Verifikasi ikon dan warna gradien untuk light mode
@@ -112,7 +112,7 @@ void main() {
       await tester.pumpWidget(
         ChangeNotifierProvider.value(
           value: themeProvider,
-          child: const MaterialApp(home: WelcomePage()),
+          child: const MaterialApp(home: WelcomeScreen()),
         ),
       );
       await tester.pump();
@@ -128,4 +128,3 @@ void main() {
     });
   });
 }
-

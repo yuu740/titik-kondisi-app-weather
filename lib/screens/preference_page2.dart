@@ -177,4 +177,3 @@ class _PreferencePage2State extends State<PreferencePage2> {
     );
   }
 }
-

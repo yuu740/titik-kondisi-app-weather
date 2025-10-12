@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../provider/theme_provider.dart';
 import '../provider/setting_provider.dart';
+import '../provider/subs_provider.dart';
+
 import '../constants/dummy_data.dart';
 
+import '../services/fake_api_service.dart';
+import '../services/fake_auth_service.dart';
+
+import './subs_screen.dart';
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -11,6 +18,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final settingsProvider = Provider.of<SettingsProvider>(context);
+    final subProvider = Provider.of<SubscriptionProvider>(context);
 
     double temp = DummyData.temperature;
     String unit = "°C";
@@ -40,6 +48,7 @@ class SettingsScreen extends StatelessWidget {
                     context,
                     themeProvider,
                     settingsProvider,
+                    subProvider,
                     temp,
                     unit,
                   ),
@@ -50,6 +59,7 @@ class SettingsScreen extends StatelessWidget {
                     context,
                     themeProvider,
                     settingsProvider,
+                    subProvider,
                     temp,
                     unit,
                   ),
@@ -63,6 +73,7 @@ class SettingsScreen extends StatelessWidget {
     BuildContext context,
     ThemeProvider themeProvider,
     SettingsProvider settingsProvider,
+    SubscriptionProvider subProvider,
     double temp,
     String unit,
   ) {
@@ -112,6 +123,48 @@ class SettingsScreen extends StatelessWidget {
         title: 'Pengingat Observasi',
         value: settingsProvider.astroReminder,
         onChanged: (value) => settingsProvider.setAstroReminder(value),
+      ),
+      _buildSectionTitle('DEBUG (Hapus Nanti)', context),
+      Consumer<FakeAuthService>(
+        builder: (context, auth, child) {
+          return Column(
+            children: [
+              Text(
+                'Status Login: ${auth.isLoggedIn ? "Logged In" : "Logged Out"}',
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await auth.login();
+                  // Muat ulang pengaturan setelah login
+                  context
+                      .read<SettingsProvider>()
+                      .reloadSettings(); // Anda perlu buat method reload ini
+                },
+                child: const Text('Simulasi Login'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await auth.logout();
+                  // Muat ulang pengaturan setelah logout
+                  context.read<SettingsProvider>().reloadSettings();
+                },
+                child: const Text('Simulasi Logout'),
+              ),
+            ],
+          );
+        },
+      ),
+      _buildSectionTitle('Dukungan', context),
+      Card(
+        child: ListTile(
+          leading: Icon(Icons.star, color: subProvider.isPro ? Colors.amber : Theme.of(context).primaryColor),
+          title: const Text('Upgrade ke Pro'),
+          subtitle: Text(subProvider.isPro ? 'Anda adalah pengguna Pro' : 'Buka semua fitur canggih'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionScreen()));
+          },
+        ),
       ),
     ];
   }
