@@ -6,6 +6,8 @@ import '../constants/dummy_data.dart';
 import '../provider/location_provider.dart';
 import '../provider/setting_provider.dart';
 import '../widgets/animated_fade_slide.dart';
+import '../provider/weather_provider.dart'; // 1. Import WeatherProvider
+import '../models/weather_response.dart'; // 2. Import model
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -57,12 +59,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final theme = Theme.of(context);
     final locationProvider = Provider.of<LocationProvider>(context);
     final settingsProvider = Provider.of<SettingsProvider>(context);
+    final weatherProvider = Provider.of<WeatherProvider>(context);
+    // --- 4. Logika Loading & Error ---
+    // Tampilkan loading besar jika data belum ada sama sekali
+    if (weatherProvider.isLoading && weatherProvider.weatherData == null) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(title: const Text("Dashboard"), elevation: 0),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Tampilkan error jika ada
+    if (weatherProvider.error != null && weatherProvider.weatherData == null) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(title: const Text("Dashboard"), elevation: 0),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Text(
+              'Error: ${weatherProvider.error}',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Tampilkan jika data tidak ada (kasus aneh)
+    if (weatherProvider.weatherData == null) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(title: const Text("Dashboard"), elevation: 0),
+        body: const Center(child: Text('Data cuaca tidak tersedia.')),
+      );
+    }
+    // --- Akhir Logika Loading & Error ---
+
+    // 5. Jika lolos, kita punya data!
+    final apiData = weatherProvider.weatherData!;
+    final weather = apiData.weather; // Data cuaca spesifik
     final formattedDate = DateFormat(
       'EEEE, dd MMMM yyyy - HH:mm',
       'id_ID',
     ).format(DateTime.now());
 
-    double temp = DummyData.temperature;
+    double temp = weather.temperature;
     String unit = "°C";
     if (!settingsProvider.isCelsius) {
       temp = (temp * 9 / 5) + 32;
@@ -91,9 +134,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildHeader(theme, locationProvider),
+                        _buildHeader(theme, locationProvider, apiData),
                         const SizedBox(height: 16),
-                        _buildWeatherCard(theme, formattedDate, temp, unit),
+                        _buildWeatherCard(
+                          theme,
+                          formattedDate,
+                          temp,
+                          unit,
+                          weather,
+                        ),
                       ],
                     ),
                   ),
@@ -105,7 +154,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildWeatherDetailsGrid(context),
+                        _buildWeatherDetailsGrid(context, weather),
                         const SizedBox(height: 24),
                         Text(
                           'Prediksi Hujan 6 Jam ke Depan',
@@ -125,11 +174,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHeader(theme, locationProvider),
+                  _buildHeader(theme, locationProvider, apiData),
                   const SizedBox(height: 16),
-                  _buildWeatherCard(theme, formattedDate, temp, unit),
+                  _buildWeatherCard(theme, formattedDate, temp, unit, weather),
                   const SizedBox(height: 24),
-                  _buildWeatherDetailsGrid(context),
+                  _buildWeatherDetailsGrid(context, weather),
                   const SizedBox(height: 24),
                   Text(
                     'Prediksi Hujan 6 Jam ke Depan',
@@ -147,7 +196,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // --- WIDGET INI YANG DIMODIFIKASI ---
-  Widget _buildHeader(ThemeData theme, LocationProvider locationProvider) {
+  Widget _buildHeader(
+    ThemeData theme,
+    LocationProvider locationProvider,
+    ApiResponseData apiData,
+  ) {
     final bool isDarkMode = theme.brightness == Brightness.dark;
     final Color locationColor = isDarkMode ? Colors.white70 : Colors.black87;
 
@@ -156,7 +209,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(DummyData.rainPrediction, style: theme.textTheme.headlineSmall),
+          Text(
+            apiData.indices.hikingRecommendation,
+            style: theme.textTheme.headlineSmall,
+          ),
           const SizedBox(height: 8),
           Row(
             // Agar ikon dan tombol edit tetap di atas jika teks wrapping
@@ -205,6 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String date,
     double temp,
     String unit,
+    WeatherData weather,
   ) {
     return AnimatedFadeSlide(
       delay: 200,
@@ -244,7 +301,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                DummyData.weatherCondition,
+                weather.precipitation > 0
+                    ? "Rainy"
+                    : (weather.cloudCover > 50 ? "Cloudy" : "Clear"),
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                 ),
@@ -256,7 +315,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildWeatherDetailsGrid(BuildContext context) {
+  Widget _buildWeatherDetailsGrid(BuildContext context, WeatherData weather) {
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 250,
@@ -272,25 +331,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _InfoCard(
             icon: Icons.air,
             label: 'AQI',
-            value: DummyData.aqi.toString(),
+            value: weather.aqi.toString(),
             color: Colors.green,
           ),
           _InfoCard(
             icon: Icons.wb_sunny_outlined,
             label: 'UV Index',
-            value: DummyData.uv.toString(),
+            value: weather.uvIndex.toStringAsFixed(1),
             color: Colors.orange,
           ),
           _InfoCard(
             icon: Icons.water_drop_outlined,
-            label: 'Humidity',
-            value: '${DummyData.humidity}%',
+            label: 'Precipitation',
+            value: '${weather.precipitation} mm',
             color: Colors.lightBlue,
           ),
           _InfoCard(
             icon: Icons.cloud_outlined,
             label: 'Cloud Cover',
-            value: '${DummyData.cloudCover}%',
+            value: '${weather.cloudCover}%',
             color: Colors.grey,
           ),
         ];

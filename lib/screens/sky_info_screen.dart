@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../constants/dummy_data.dart';
+
 import '../widgets/radial_progress_widget.dart';
 import '../widgets/animated_fade_slide.dart';
+import 'package:provider/provider.dart';
+import '../provider/weather_provider.dart';
 
 class SkyInfoScreen extends StatelessWidget {
   const SkyInfoScreen({super.key});
@@ -9,7 +11,21 @@ class SkyInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    final weatherProvider = Provider.of<WeatherProvider>(
+      context,
+      listen: false,
+    );
+    if (weatherProvider.weatherData == null) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(title: const Text('Info Langit Malam')),
+        body: const Center(child: Text("Data belum dimuat.")),
+      );
+    }
+    final moonData = weatherProvider.weatherData!.moon;
+    final weatherData = weatherProvider.weatherData!.weather;
+    final sunData = weatherProvider.weatherData!.sun;
+    final indicesData = weatherProvider.weatherData!.indices;
     return Scaffold(
       backgroundColor: Colors.transparent, // Membuat scaffold transparan
       appBar: AppBar(
@@ -31,7 +47,7 @@ class SkyInfoScreen extends StatelessWidget {
                   delay: 200,
                   child: Center(
                     child: RadialProgressIndicator(
-                      score: DummyData.observationScore,
+                      score: indicesData.hikingIndex.toDouble(),
                     ),
                   ),
                 ),
@@ -49,22 +65,23 @@ class SkyInfoScreen extends StatelessWidget {
                       _SkyInfoItem(
                         icon: Icons.cloud_outlined,
                         label: 'Tutupan Awan',
-                        value: '${DummyData.cloudCover}%',
+                        value: '${weatherData.cloudCover}%',
                       ),
                       _SkyInfoItem(
                         icon: Icons.nightlight_round,
                         label: 'Fase Bulan',
-                        value: DummyData.moonPhase,
+                        value: moonData.phaseName,
                       ),
                       _SkyInfoItem(
                         icon: Icons.lightbulb_outline,
-                        label: 'Polusi Cahaya',
-                        value: DummyData.lightPollution,
+                        label: 'Iluminasi Bulan',
+                        value:
+                            '${(moonData.illumination * 100).toStringAsFixed(0)}%',
                       ),
                       _SkyInfoItem(
                         icon: Icons.access_time,
-                        label: 'Waktu Terbaik',
-                        value: DummyData.bestTime,
+                        label: 'Golden Hour',
+                        value: sunData.goldenHour,
                       ),
                     ],
                   ),

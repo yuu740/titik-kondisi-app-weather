@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 1. IMPORT
 import '../services/location_service.dart';
 
 class LocationProvider with ChangeNotifier {
@@ -17,6 +18,16 @@ class LocationProvider with ChangeNotifier {
     fetchInitialLocation();
   }
 
+  // 2. TAMBAHKAN FUNGSI BARU
+  Future<void> _saveLastKnownLocation(Position position) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('last_lat', position.latitude);
+    await prefs.setDouble('last_lon', position.longitude);
+    print(
+      'Lokasi disimpan ke SharedPreferences: ${position.latitude}, ${position.longitude}',
+    );
+  }
+
   Future<void> fetchInitialLocation() async {
     _isLoading = true;
     notifyListeners();
@@ -27,6 +38,9 @@ class LocationProvider with ChangeNotifier {
         _currentPosition!.latitude,
         _currentPosition!.longitude,
       );
+
+      // 3. PANGGIL FUNGSI SIMPAN
+      await _saveLastKnownLocation(_currentPosition!);
     } else {
       _currentLocationName = "Izin lokasi ditolak";
     }
@@ -37,7 +51,14 @@ class LocationProvider with ChangeNotifier {
 
   void setManualLocation(String locationName, Position? position) {
     _currentLocationName = locationName;
-    _currentPosition = position; // Can be null for manual entry
+    _currentPosition = position;
+
+    // 4. PANGGIL FUNGSI SIMPAN (jika ada data posisi)
+    if (position != null) {
+      _saveLastKnownLocation(position);
+    }
+
     notifyListeners();
   }
 }
+
