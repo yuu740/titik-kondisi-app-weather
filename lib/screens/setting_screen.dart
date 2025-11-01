@@ -4,9 +4,7 @@ import 'package:provider/provider.dart';
 import '../provider/theme_provider.dart';
 import '../provider/setting_provider.dart';
 import '../provider/subs_provider.dart';
-import '../provider/weather_provider.dart'; // 1. IMPORT WeatherProvider
-
-// import '../constants/dummy_data.dart'; // 2. HAPUS DummyData
+import '../provider/weather_provider.dart'; 
 
 import '../services/fake_api_service.dart';
 import '../services/fake_auth_service.dart';
@@ -30,19 +28,31 @@ class SettingsScreen extends StatelessWidget {
     // 4. GUNAKAN WeatherProvider untuk suhu
     final weatherProvider = Provider.of<WeatherProvider>(context);
 
-    double temp;
-    String unit = "°C";
+    String temperatureSubtitle;
 
-    // Cek jika data cuaca sudah ada
     if (weatherProvider.weatherData != null) {
-      temp = weatherProvider.weatherData!.weather.temperature;
+      double temp = weatherProvider.weatherData!.weather.temperature;
+      String unit = "°C";
+      if (!settingsProvider.isCelsius) {
+        temp = (temp * 9 / 5) + 32;
+        unit = "°F";
+      }
+      temperatureSubtitle = 'Suhu saat ini: ${temp.toStringAsFixed(1)}$unit';
     } else {
-      temp = 0; // Tampilkan 0 atau 'N/A' jika data belum siap
-    }
-
-    if (!settingsProvider.isCelsius) {
-      temp = (temp * 9 / 5) + 32;
-      unit = "°F";
+   
+      if (weatherProvider.error != null) {
+        final errorString = weatherProvider.error.toString();
+        bool isOfflineError = errorString.contains('SocketException') ||
+            errorString.contains('Failed host lookup');
+        
+        if (isOfflineError) {
+          temperatureSubtitle = 'Suhu saat ini: N/A (Offline)';
+        } else {
+          temperatureSubtitle = 'Suhu saat ini: N/A (Error)';
+        }
+      } else {
+        temperatureSubtitle = 'Suhu saat ini: N/A';
+      }
     }
 
     return Scaffold(
@@ -67,8 +77,7 @@ class SettingsScreen extends StatelessWidget {
                     themeProvider,
                     settingsProvider,
                     subProvider,
-                    temp,
-                    unit,
+
                   ),
                 )
               : ListView(
@@ -78,8 +87,7 @@ class SettingsScreen extends StatelessWidget {
                     themeProvider,
                     settingsProvider,
                     subProvider,
-                    temp,
-                    unit,
+
                   ),
                 );
         },
@@ -92,9 +100,29 @@ class SettingsScreen extends StatelessWidget {
     ThemeProvider themeProvider,
     SettingsProvider settingsProvider,
     SubscriptionProvider subProvider,
-    double temp,
-    String unit,
   ) {
+    final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    String temperatureSubtitle;
+
+    if (weatherProvider.weatherData != null) {
+       double tempVal = weatherProvider.weatherData!.weather.temperature;
+       String unitVal = "°C";
+       if (!settingsProvider.isCelsius) {
+         tempVal = (tempVal * 9 / 5) + 32;
+         unitVal = "°F";
+       }
+       temperatureSubtitle = 'Suhu saat ini: ${tempVal.toStringAsFixed(1)}$unitVal';
+    } else {
+       if (weatherProvider.error != null) {
+         final errorString = weatherProvider.error.toString();
+         bool isOfflineError = errorString.contains('SocketException') ||
+             errorString.contains('Failed host lookup');
+         temperatureSubtitle = isOfflineError ? 'Suhu saat ini: N/A (Offline)' : 'Suhu saat ini: N/A (Error)';
+       } else {
+         temperatureSubtitle = 'Suhu saat ini: N/A';
+       }
+    }
     return [
       _buildSectionTitle('Tampilan', context),
       _buildSwitchTile(
@@ -123,9 +151,7 @@ class SettingsScreen extends StatelessWidget {
         context: context,
         icon: Icons.thermostat_outlined,
         title: 'Gunakan Celcius',
-        // 5. Tampilkan suhu (bisa N/A jika temp = 0)
-        subtitle:
-            'Suhu saat ini: ${temp == 0 ? "N/A" : temp.toStringAsFixed(1)}$unit',
+        subtitle: temperatureSubtitle,
         value: settingsProvider.isCelsius,
         onChanged: (value) => settingsProvider.toggleTemperatureUnit(value),
       ),
