@@ -12,12 +12,13 @@ class PreferencePage1 extends StatefulWidget {
 }
 
 class _PreferencePage1State extends State<PreferencePage1> {
-  bool? _isLocationAutomatic;
+  // bool? _isLocationAutomatic;
 
-  Future<void> _requestLocationPermission() async {
+  Future<void> _requestLocationPermission(SettingsProvider settingsProvider) async {
     final status = await Permission.location.request();
     if (mounted) {
-      setState(() => _isLocationAutomatic = status.isGranted);
+      // setState(() => _isLocationAutomatic = status.isGranted);
+      settingsProvider.setAutoLocation(status.isGranted);
     }
   }
 
@@ -119,18 +120,21 @@ class _PreferencePage1State extends State<PreferencePage1> {
                   _buildChoiceChip(
                     context: context,
                     label: 'Ya, Otomatis',
-                    isSelected: _isLocationAutomatic == true,
+                    isSelected: settingsProvider.autoLocation,
                     onSelected: (selected) {
-                      if (selected) _requestLocationPermission();
+                      if (selected) {
+                        _requestLocationPermission(settingsProvider);
+                      }
                     },
                   ),
                   _buildChoiceChip(
                     context: context,
                     label: 'Pilih Manual',
-                    isSelected: _isLocationAutomatic == false,
+                    isSelected: !settingsProvider.autoLocation,
                     onSelected: (selected) {
-                      if (selected)
-                        setState(() => _isLocationAutomatic = false);
+                      if (selected) {
+                        settingsProvider.setAutoLocation(false);
+                      }
                     },
                   ),
                 ],

@@ -108,15 +108,13 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => LocationProvider()),
-        ChangeNotifierProvider(
-          create: (_) => SubscriptionProvider(),
-        ), // Tambahkan ini
-        // Gunakan ChangeNotifierProvider untuk FakeAuthService agar UI bisa listen perubahannya
+        ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+        // Provider independen taruh di atas
         ChangeNotifierProvider(create: (_) => FakeAuthService()),
-
         Provider(create: (_) => FakeApiService()),
         Provider(create: (_) => WeatherService()),
+
+        // 1. SettingsProvider (tergantung pada Auth)
         ChangeNotifierProxyProvider<FakeAuthService, SettingsProvider>(
           create: (context) => SettingsProvider(
             context.read<FakeAuthService>(),
@@ -125,12 +123,26 @@ void main() async {
           update: (context, auth, previousSettings) =>
               SettingsProvider(auth, context.read<FakeApiService>()),
         ),
+
+        // 2. LocationProvider (SEKARANG tergantung pada Settings)
+        ChangeNotifierProxyProvider<SettingsProvider, LocationProvider>(
+          create: (context) {
+            // Langsung berikan settings saat dibuat
+            final settings = context.read<SettingsProvider>();
+            return LocationProvider(settings)..initialize(); // Panggil initialize baru
+          },
+          update: (context, settings, previousLocation) {
+            // Setiap kali settings berubah (misal, toggle), update LocationProvider
+            previousLocation!.updateSettings(settings);
+            return previousLocation;
+          },
+        ),
+
+        // 3. WeatherProvider (tergantung pada Location, tidak berubah)
         ChangeNotifierProxyProvider<LocationProvider, WeatherProvider>(
           create: (context) => WeatherProvider(context.read<WeatherService>()),
-          // 'update' akan berjalan setiap kali LocationProvider memanggil notifyListeners()
           update: (context, location, weather) {
-            // 'weather' adalah instance dari create, 'location' adalah data baru
-            weather!.updateLocation(location); // Panggil method update kita
+            weather!.updateLocation(location);
             return weather;
           },
         ),
