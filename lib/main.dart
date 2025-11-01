@@ -4,8 +4,8 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:titik_kondisi/provider/setting_provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // 1. IMPORT
-import 'package:workmanager/workmanager.dart'; // 2. IMPORT
+import 'package:shared_preferences/shared_preferences.dart'; 
+import 'package:workmanager/workmanager.dart'; 
 
 import './provider/subs_provider.dart';
 import './screens/splash_screen.dart';
@@ -17,9 +17,9 @@ import './services/fake_auth_service.dart';
 import './services/fake_api_service.dart';
 import './services/weather_service.dart';
 import './provider/weather_provider.dart';
-import './services/notification_service.dart'; // 3. IMPORT
+import './services/notification_service.dart'; 
 
-@pragma('vm:entry-point') // Wajib untuk iOS
+@pragma('vm:entry-point') 
 void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
     // --- DI SINILAH LOGIKA ANDA BERJALAN ---
@@ -38,9 +38,16 @@ void callbackDispatcher() {
     final double? lat = prefs.getDouble('last_lat');
     final double? lon = prefs.getDouble('last_lon');
 
+    final bool notificationsEnabled = prefs.getBool('notifications') ?? true;
+    
     if (lat == null || lon == null) {
       print("Background Task: Gagal, tidak ada lokasi tersimpan.");
-      return Future.value(false); // Gagal, tidak ada lokasi
+      return Future.value(false); 
+    }
+
+    if (!notificationsEnabled) {
+      print("Background Task: Dibatalkan, notifikasi dimatikan dari pengaturan.");
+      return Future.value(true); 
     }
 
     // 3. Inisialisasi Service Anda (TANPA Provider)

@@ -38,11 +38,11 @@ class NotificationService {
     );
 
     // Minta izin notifikasi di Android 13+
-    await _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
+    // await _flutterLocalNotificationsPlugin
+    //     .resolvePlatformSpecificImplementation<
+    //       AndroidFlutterLocalNotificationsPlugin
+    //     >()
+    //     ?.requestNotificationsPermission();
   }
 
   // Menampilkan notifikasi
