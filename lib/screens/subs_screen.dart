@@ -8,7 +8,6 @@ class SubscriptionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Gunakan Consumer agar UI otomatis update saat status berubah
     return Consumer<SubscriptionProvider>(
       builder: (context, subProvider, child) {
         final theme = Theme.of(context);
@@ -30,7 +29,7 @@ class SubscriptionScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 _buildProCard(context, theme, subProvider),
                 const SizedBox(height: 20),
-                _buildDonationCard(context, theme),
+                _buildDonationCard(context, theme, subProvider),
               ],
             ),
           ),
@@ -70,23 +69,36 @@ class SubscriptionScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 backgroundColor: subProvider.isPro ? Colors.grey : theme.primaryColor,
                 foregroundColor: theme.colorScheme.onPrimary,
+                disabledBackgroundColor: Colors.grey.withOpacity(0.5),
               ),
-              onPressed: () {
-                if (subProvider.isPro) {
-                  subProvider.downgradeToFree();
-                } else {
-                  subProvider.upgradeToPro();
-                }
-              },
-              child: Text(subProvider.isPro ? 'Nonaktifkan Pro (Simulasi)' : 'Upgrade ke Pro'),
-            ),
+              onPressed: subProvider.isSubProcessing
+                  ? null 
+                  : () async {
+                      if (subProvider.isPro) {
+                        await subProvider.downgradeToFree();
+                      } else {
+                        await subProvider.upgradeToPro();
+                      }
+                    },
+              child: subProvider.isSubProcessing
+                  ? const SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    )
+                  : Text(subProvider.isPro
+                      ? 'Nonaktifkan Pro (Simulasi)'
+                      : 'Upgrade ke Pro'),            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDonationCard(BuildContext context, ThemeData theme) {
+  Widget _buildDonationCard(BuildContext context, ThemeData theme, SubscriptionProvider subProvider) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -104,10 +116,34 @@ class SubscriptionScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                // Arahkan ke link donasi (Trakteer, Saweria, dll)
-              },
-              child: const Text('Donasi Sekarang'),
+              style: ElevatedButton.styleFrom(
+                disabledBackgroundColor: Colors.grey.withOpacity(0.5),
+              ),
+              onPressed: subProvider.isDonationProcessing
+                  ? null // Nonaktifkan jika sedang proses
+                  : () async {
+                      // Panggil simulasi
+                      await subProvider.simulateDonation();
+                      
+                      // Tampilkan SnackBar setelah selesai
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Terima kasih atas donasi Anda! (Simulasi)'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    },
+              child: subProvider.isDonationProcessing
+                  ? const SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                      ),
+                    )
+                  : const Text('Donasi Sekarang'),
             )
           ],
         ),

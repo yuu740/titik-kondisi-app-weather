@@ -9,6 +9,13 @@ class SubscriptionProvider with ChangeNotifier {
 
   bool get isPro => _status == SubscriptionStatus.pro;
 
+  bool _isSubProcessing = false;
+  bool get isSubProcessing => _isSubProcessing;
+
+  bool _isDonationProcessing = false;
+  bool get isDonationProcessing => _isDonationProcessing;
+
+
   SubscriptionProvider() {
     _loadStatus();
   }
@@ -26,17 +33,40 @@ class SubscriptionProvider with ChangeNotifier {
     await prefs.setBool('isPro', isProUser);
   }
 
-  void upgradeToPro() {
+  Future<void> upgradeToPro() async {
+    _isSubProcessing = true;
+    notifyListeners();
+
+    // Simulasi proses pembayaran (2 detik)
+    await Future.delayed(const Duration(seconds: 2));
+
     _status = SubscriptionStatus.pro;
-    _saveStatus(true); // Simpan status 'true' ke SharedPreferences
+    _saveStatus(true);
+    _isSubProcessing = false;
     notifyListeners();
     print("Status Pro Diaktifkan dan Disimpan.");
   }
+  Future<void> downgradeToFree() async {
+    _isSubProcessing = true;
+    notifyListeners();
 
-  void downgradeToFree() {
+    await Future.delayed(const Duration(seconds: 2));
+
     _status = SubscriptionStatus.free;
-    _saveStatus(false); 
+    _saveStatus(false);
+    _isSubProcessing = false;
     notifyListeners();
     print("Status Pro Dinonaktifkan dan Disimpan.");
+  }
+
+  Future<void> simulateDonation() async {
+    _isDonationProcessing = true;
+    notifyListeners();
+
+    // Simulasi proses donasi (3 detik)
+    await Future.delayed(const Duration(seconds: 3));
+
+    _isDonationProcessing = false;
+    notifyListeners();
   }
 }
