@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="https://octodex.github.com/images/jetpacktocat.gif" width="400" alt="GitHub Octocat Banner">
-</p>
+
 <h1 align="center">About TitikKondisi</h1>
 
 <h3 align="center">"From air quality to astral clarity"</h3>
