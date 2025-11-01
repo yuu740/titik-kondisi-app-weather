@@ -10,7 +10,39 @@ import '../provider/location_provider.dart';
 import './setting_screen.dart';
 class SkyInfoScreen extends StatelessWidget {
   const SkyInfoScreen({super.key});
-
+  Widget _buildOfflineErrorWidget(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.wifi_off_outlined, size: 60, color: Colors.grey),
+            const SizedBox(height: 16),
+            const Text(
+              'Koneksi Gagal',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Gagal memuat data langit. Pastikan Anda terhubung ke internet.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                Provider.of<WeatherProvider>(context, listen: false)
+                    .fetchWeatherData();
+              },
+              child: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -59,11 +91,46 @@ class SkyInfoScreen extends StatelessWidget {
         ),
       );
     }
+
+    if (weatherProvider.error != null && weatherProvider.weatherData == null) {
+      final errorString = weatherProvider.error.toString();
+      bool isOfflineError = errorString.contains('SocketException') ||
+          errorString.contains('Failed host lookup');
+
+      if (isOfflineError) {
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title: const Text('Info Langit Malam'),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+          body: _buildOfflineErrorWidget(context), // Panggil widget baru
+        );
+      } else {
+        // Tampilkan error lainnya
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title: const Text('Info Langit Malam'),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+          body: Center(
+              child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Text('Error: $errorString', textAlign: TextAlign.center),
+          )),
+        );
+      }
+    }
     if (weatherProvider.weatherData == null) {
       return Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(title: const Text('Info Langit Malam')),
-        body: const Center(child: Text("Data belum dimuat.")),
+        body: const Center(
+            child:
+                CircularProgressIndicator()), 
       );
     }
     final moonData = weatherProvider.weatherData!.moon;

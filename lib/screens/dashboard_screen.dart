@@ -110,12 +110,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (weatherProvider.isLoading && weatherProvider.weatherData == null) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(title: const Text("Dashboard"), elevation: 0, backgroundColor: Colors.transparent),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Tampilkan error jika ada
+    if (weatherProvider.error != null && weatherProvider.weatherData == null) {
+      
+      // Ini adalah logika yang Anda tulis, sekarang di tempat yang benar
       final errorString = weatherProvider.error.toString();
       bool isOfflineError = errorString.contains('SocketException') ||
           errorString.contains('Failed host lookup');
         
       if (isOfflineError) {
-        // 3. JIKA BENAR OFFLINE: Tampilkan widget baru yang ramah
+        // JIKA BENAR OFFLINE: Tampilkan widget baru yang ramah
         return Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
@@ -126,7 +137,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           body: _buildOfflineErrorWidget(context), // Panggil widget baru kita
         );
       } else {
-        // 4. JIKA ERROR LAIN: Tampilkan error seperti biasa (tapi lebih rapi)
+        // JIKA ERROR LAIN: Tampilkan error seperti biasa (tapi lebih rapi)
         return Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
@@ -145,23 +156,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         );
       }
-    }
-
-    // Tampilkan error jika ada
-    if (weatherProvider.error != null && weatherProvider.weatherData == null) {
-      return Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(title: const Text("Dashboard"), elevation: 0),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Text(
-              'Error: ${weatherProvider.error}',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      );
     }
 
     // Tampilkan jika data tidak ada (kasus aneh)
