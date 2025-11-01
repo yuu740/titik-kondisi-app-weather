@@ -5,16 +5,60 @@ import '../widgets/animated_fade_slide.dart';
 import 'package:provider/provider.dart';
 import '../provider/weather_provider.dart';
 
+import '../provider/setting_provider.dart';
+import '../provider/location_provider.dart';
+import './setting_screen.dart';
 class SkyInfoScreen extends StatelessWidget {
   const SkyInfoScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final weatherProvider = Provider.of<WeatherProvider>(
-      context,
-      listen: false,
-    );
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+    final locationProvider = Provider.of<LocationProvider>(context);
+    final weatherProvider = Provider.of<WeatherProvider>(context);
+    if (!settingsProvider.autoLocation && locationProvider.currentPosition == null) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text('Info Langit Malam'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.location_off_outlined, size: 60, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text(
+                  'Lokasi otomatis nonaktif.',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Pilih lokasi manual di halaman Dashboard untuk melihat data.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                  child: const Text('Buka Pengaturan'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     if (weatherProvider.weatherData == null) {
       return Scaffold(
         backgroundColor: Colors.transparent,

@@ -6,8 +6,9 @@ import '../constants/dummy_data.dart';
 import '../provider/location_provider.dart';
 import '../provider/setting_provider.dart';
 import '../widgets/animated_fade_slide.dart';
-import '../provider/weather_provider.dart'; // 1. Import WeatherProvider
-import '../models/weather_response.dart'; // 2. Import model
+import '../provider/weather_provider.dart'; 
+import '../models/weather_response.dart'; 
+import '../screens/setting_screen.dart'; 
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -60,14 +61,90 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final locationProvider = Provider.of<LocationProvider>(context);
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final weatherProvider = Provider.of<WeatherProvider>(context);
-    // --- 4. Logika Loading & Error ---
-    // Tampilkan loading besar jika data belum ada sama sekali
-    if (weatherProvider.isLoading && weatherProvider.weatherData == null) {
+    
+    if (!settingsProvider.autoLocation && locationProvider.currentPosition == null) {
       return Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(title: const Text("Dashboard"), elevation: 0),
-        body: const Center(child: CircularProgressIndicator()),
+        appBar: AppBar(
+          title: const Text("Dashboard"),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.location_off_outlined, size: 60, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text(
+                  'Lokasi otomatis nonaktif.',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Aktifkan di pengaturan atau pilih lokasi secara manual.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => _showSearchDialog(context),
+                  child: const Text('Pilih Lokasi Manual'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                  child: const Text('Buka Pengaturan'),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
+    }
+
+    if (weatherProvider.isLoading && weatherProvider.weatherData == null) {
+      final errorString = weatherProvider.error.toString();
+      bool isOfflineError = errorString.contains('SocketException') ||
+          errorString.contains('Failed host lookup');
+        
+      if (isOfflineError) {
+        // 3. JIKA BENAR OFFLINE: Tampilkan widget baru yang ramah
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title: const Text("Dashboard"),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+          ),
+          body: _buildOfflineErrorWidget(context), // Panggil widget baru kita
+        );
+      } else {
+        // 4. JIKA ERROR LAIN: Tampilkan error seperti biasa (tapi lebih rapi)
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title: const Text("Dashboard"),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+          ),
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text(
+                'Terjadi kesalahan: $errorString', // Tetap tampilkan error lain
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        );
+      }
     }
 
     // Tampilkan error jika ada
@@ -194,8 +271,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-
-  // --- WIDGET INI YANG DIMODIFIKASI ---
+Widget _buildOfflineErrorWidget(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.wifi_off_outlined, size: 60, color: Colors.grey),
+            const SizedBox(height: 16),
+            const Text(
+              'Koneksi Gagal',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Gagal memuat data cuaca. Pastikan Anda terhubung ke internet.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                // Saat ditekan, panggil WeatherProvider untuk mencoba mengambil data lagi
+                Provider.of<WeatherProvider>(context, listen: false)
+                    .fetchWeatherData();
+              },
+              child: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _buildHeader(
     ThemeData theme,
     LocationProvider locationProvider,

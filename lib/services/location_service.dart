@@ -66,4 +66,31 @@ class LocationService {
       return "Gagal mendapatkan nama lokasi";
     }
   }
+  Future<Position?> getCoordinatesFromAddress(String address) async {
+    try {
+      // 1. Gunakan package geocoding untuk mencari alamat
+      List<Location> locations = await locationFromAddress(address);
+
+      if (locations.isNotEmpty) {
+        final location = locations.first;
+        return Position(
+          latitude: location.latitude,
+          longitude: location.longitude,
+          timestamp: DateTime.now(),
+          accuracy: 0.0,
+          altitude: 0.0,
+          altitudeAccuracy: 0.0,
+          heading: 0.0,
+          headingAccuracy: 0.0,
+          speed: 0.0,
+          speedAccuracy: 0.0,
+        );
+      }
+      return null;
+    } catch (e) {
+      print("Error getting coordinates from address: $e");
+      return null;
+    }
+  }
+
 }
