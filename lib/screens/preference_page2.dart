@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../provider/setting_provider.dart';
 
 class PreferencePage2 extends StatefulWidget {
   const PreferencePage2({super.key});
@@ -8,19 +10,19 @@ class PreferencePage2 extends StatefulWidget {
 }
 
 class _PreferencePage2State extends State<PreferencePage2> {
+
   bool _isCelsius = true;
-  bool _isAstronomyReminder = false;
-  bool _isRainReminder = true;
 
   @override
   Widget build(BuildContext context) {
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pengaturan Lanjutan (2/2)'),
+        title: const Text('Advanced Settings (2/2)'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading:
-            false, // Tombol kembali di-handle oleh OnboardingScreen
+        automaticallyImplyLeading: false, 
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
@@ -28,93 +30,46 @@ class _PreferencePage2State extends State<PreferencePage2> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Preferensi Lainnya',
+              'Final Touches',
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Pilih satuan dan pengingat yang Anda inginkan.',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(color: Colors.grey),
+              'Select your preferred temperature unit.',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
             ),
             const SizedBox(height: 32),
+            
             _buildPreferenceCard(
               context: context,
               icon: Icons.thermostat_outlined,
-              title: 'Satuan Temperatur',
+              title: 'Temperature Unit',
               child: Wrap(
                 spacing: 12.0,
                 runSpacing: 12.0,
                 children: [
                   _buildChoiceChip(
                     context: context,
-                    label: 'Celcius (°C)',
+                    label: 'Celsius (°C)',
                     isSelected: _isCelsius,
-                    onSelected: (selected) => setState(() => _isCelsius = true),
+                    onSelected: (selected) {
+                      setState(() => _isCelsius = true);
+                      settingsProvider.toggleTemperatureUnit(true);
+                    },
                   ),
                   _buildChoiceChip(
                     context: context,
                     label: 'Fahrenheit (°F)',
                     isSelected: !_isCelsius,
-                    onSelected: (selected) =>
-                        setState(() => _isCelsius = false),
+                    onSelected: (selected) {
+                       setState(() => _isCelsius = false);
+                       settingsProvider.toggleTemperatureUnit(false);
+                    },
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            _buildPreferenceCard(
-              context: context,
-              icon: Icons.star_border_outlined,
-              title: 'Ingin Pengingat Astronomi?',
-              child: Wrap(
-                spacing: 12.0,
-                runSpacing: 12.0,
-                children: [
-                  _buildChoiceChip(
-                    context: context,
-                    label: 'Ya',
-                    isSelected: _isAstronomyReminder,
-                    onSelected: (selected) =>
-                        setState(() => _isAstronomyReminder = true),
-                  ),
-                  _buildChoiceChip(
-                    context: context,
-                    label: 'Tidak',
-                    isSelected: !_isAstronomyReminder,
-                    onSelected: (selected) =>
-                        setState(() => _isAstronomyReminder = false),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildPreferenceCard(
-              context: context,
-              icon: Icons.water_drop_outlined,
-              title: 'Ingin Pengingat Hujan?',
-              child: Wrap(
-                spacing: 12.0,
-                runSpacing: 12.0,
-                children: [
-                  _buildChoiceChip(
-                    context: context,
-                    label: 'Ya',
-                    isSelected: _isRainReminder,
-                    onSelected: (selected) =>
-                        setState(() => _isRainReminder = true),
-                  ),
-                  _buildChoiceChip(
-                    context: context,
-                    label: 'Tidak',
-                    isSelected: !_isRainReminder,
-                    onSelected: (selected) =>
-                        setState(() => _isRainReminder = false),
-                  ),
-                ],
-              ),
-            ),
+            
           ],
         ),
       ),

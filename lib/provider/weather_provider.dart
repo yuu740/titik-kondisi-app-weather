@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import '../services/weather_service.dart';
 import '../models/weather_response.dart';
-import './location_provider.dart'; // Import LocationProvider
+import '../models/rain_forecast_model.dart';
+import './location_provider.dart';
 
 class WeatherProvider with ChangeNotifier {
   final WeatherService _weatherService;
   LocationProvider? _locationProvider; // Akan di-update oleh ProxyProvider
 
   ApiResponseData? _weatherData;
+  RainForecastData? _rainData;
+
   bool _isLoading = false;
   String? _error;
 
   ApiResponseData? get weatherData => _weatherData;
+  RainForecastData? get rainData => _rainData; 
+
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -24,8 +29,6 @@ class WeatherProvider with ChangeNotifier {
   void updateLocation(LocationProvider newLocationProvider) {
     _locationProvider = newLocationProvider;
 
-    // --- INILAH PERBAIKANNYA ---
-    // Kita harus mengakses '.currentPosition' dulu, baru '.latitude' / '.longitude'
     if (_locationProvider?.currentPosition != null) {
       final newCoords = (
         _locationProvider!.currentPosition!.latitude, // <-- Diubah
@@ -47,10 +50,7 @@ class WeatherProvider with ChangeNotifier {
   }
 
   Future<void> fetchWeatherData() async {
-    // --- PERBAIKAN DI SINI JUGA ---
-    // Cek apakah 'currentPosition' ada (bukan latitude/longitude langsung)
     if (_locationProvider?.currentPosition == null) {
-      // <-- Diubah
       _error = "Lokasi tidak tersedia.";
       notifyListeners();
       return;
@@ -70,9 +70,19 @@ class WeatherProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _weatherData = await _weatherService.fetchWeatherData(lat, lon);
+
+      final results = await Future.wait([
+        _weatherService.fetchWeatherData(lat, lon),
+        _weatherService.fetchRainForecast(lat, lon),
+      ]);
+
+      _weatherData = results[0] as ApiResponseData;
+      _rainData = results[1] as RainForecastData;
+
     } catch (e) {
       _error = e.toString();
+      _weatherData = null;
+      _rainData = null;
     } finally {
       _isLoading = false;
       notifyListeners();

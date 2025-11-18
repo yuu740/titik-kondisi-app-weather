@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:workmanager/workmanager.dart';
 
+// --- PROVIDERS ---
 import '../provider/theme_provider.dart';
 import '../provider/setting_provider.dart';
 import '../provider/subs_provider.dart';
-import '../provider/weather_provider.dart'; 
+import '../provider/weather_provider.dart';
+import '../provider/auth_provider.dart'; // Import AuthProvider
 
+// --- SERVICES ---
 import '../services/fake_api_service.dart';
-import '../services/fake_auth_service.dart';
-
-// 3. IMPORT UNTUK DEBUGGING
-import 'package:workmanager/workmanager.dart';
 import '../services/notification_service.dart';
 
+// --- SCREENS ---
 import 'welcome_screen.dart';
 import './subs_screen.dart';
 
@@ -24,12 +25,10 @@ class SettingsScreen extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final subProvider = Provider.of<SubscriptionProvider>(context);
-
-    // 4. GUNAKAN WeatherProvider untuk suhu
     final weatherProvider = Provider.of<WeatherProvider>(context);
 
+    // --- LOGIKA SUBTITLE SUHU (C/F) ---
     String temperatureSubtitle;
-
     if (weatherProvider.weatherData != null) {
       double temp = weatherProvider.weatherData!.weather.temperature;
       String unit = "°C";
@@ -37,27 +36,26 @@ class SettingsScreen extends StatelessWidget {
         temp = (temp * 9 / 5) + 32;
         unit = "°F";
       }
-      temperatureSubtitle = 'Suhu saat ini: ${temp.toStringAsFixed(1)}$unit';
+      temperatureSubtitle = 'Current Temp: ${temp.toStringAsFixed(1)}$unit';
     } else {
-   
       if (weatherProvider.error != null) {
         final errorString = weatherProvider.error.toString();
         bool isOfflineError = errorString.contains('SocketException') ||
             errorString.contains('Failed host lookup');
-        
+
         if (isOfflineError) {
-          temperatureSubtitle = 'Suhu saat ini: N/A (Offline)';
+          temperatureSubtitle = 'Current Temp: N/A (Offline)';
         } else {
-          temperatureSubtitle = 'Suhu saat ini: N/A (Error)';
+          temperatureSubtitle = 'Current Temp: N/A (Error)';
         }
       } else {
-        temperatureSubtitle = 'Suhu saat ini: N/A';
+        temperatureSubtitle = 'Current Temp: N/A';
       }
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pengaturan'),
+        title: const Text('Settings'),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -65,11 +63,12 @@ class SettingsScreen extends StatelessWidget {
         builder: (context, constraints) {
           bool isWideScreen = constraints.maxWidth > 600;
 
+          // Gunakan GridView untuk layar lebar, ListView untuk HP
           return isWideScreen
               ? GridView.count(
                   crossAxisCount: 2,
                   padding: const EdgeInsets.all(16.0),
-                  childAspectRatio: 3.5, // Sesuaikan rasio jika perlu
+                  childAspectRatio: 3.5,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                   children: _buildSettingsList(
@@ -77,7 +76,7 @@ class SettingsScreen extends StatelessWidget {
                     themeProvider,
                     settingsProvider,
                     subProvider,
-
+                    temperatureSubtitle,
                   ),
                 )
               : ListView(
@@ -87,7 +86,7 @@ class SettingsScreen extends StatelessWidget {
                     themeProvider,
                     settingsProvider,
                     subProvider,
-
+                    temperatureSubtitle,
                   ),
                 );
         },
@@ -100,77 +99,48 @@ class SettingsScreen extends StatelessWidget {
     ThemeProvider themeProvider,
     SettingsProvider settingsProvider,
     SubscriptionProvider subProvider,
+    String temperatureSubtitle,
   ) {
-    final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
-    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-    String temperatureSubtitle;
-
-    if (weatherProvider.weatherData != null) {
-       double tempVal = weatherProvider.weatherData!.weather.temperature;
-       String unitVal = "°C";
-       if (!settingsProvider.isCelsius) {
-         tempVal = (tempVal * 9 / 5) + 32;
-         unitVal = "°F";
-       }
-       temperatureSubtitle = 'Suhu saat ini: ${tempVal.toStringAsFixed(1)}$unitVal';
-    } else {
-       if (weatherProvider.error != null) {
-         final errorString = weatherProvider.error.toString();
-         bool isOfflineError = errorString.contains('SocketException') ||
-             errorString.contains('Failed host lookup');
-         temperatureSubtitle = isOfflineError ? 'Suhu saat ini: N/A (Offline)' : 'Suhu saat ini: N/A (Error)';
-       } else {
-         temperatureSubtitle = 'Suhu saat ini: N/A';
-       }
-    }
     return [
-      _buildSectionTitle('Tampilan', context),
+      // --- APPEARANCE ---
+      _buildSectionTitle('APPEARANCE', context),
       _buildSwitchTile(
         context: context,
         icon: Icons.brightness_6_outlined,
-        title: 'Mode Gelap',
+        title: 'Dark Mode',
         value: themeProvider.themeMode == ThemeMode.dark,
         onChanged: (value) => themeProvider.toggleTheme(value),
       ),
       _buildSwitchTile(
         context: context,
         icon: Icons.notifications_active_outlined,
-        title: 'Notifikasi',
+        title: 'Notifications',
         value: settingsProvider.notifications,
         onChanged: (value) => settingsProvider.setNotifications(value),
       ),
-      _buildSectionTitle('Cuaca', context),
+
+      // --- WEATHER ---
+      _buildSectionTitle('WEATHER', context),
       _buildSwitchTile(
         context: context,
         icon: Icons.location_on_outlined,
-        title: 'Lokasi Otomatis',
+        title: 'Auto Location',
         value: settingsProvider.autoLocation,
         onChanged: (value) => settingsProvider.setAutoLocation(value),
       ),
       _buildSwitchTile(
         context: context,
         icon: Icons.thermostat_outlined,
-        title: 'Gunakan Celcius',
+        title: 'Use Celsius',
         subtitle: temperatureSubtitle,
         value: settingsProvider.isCelsius,
         onChanged: (value) => settingsProvider.toggleTemperatureUnit(value),
       ),
-      _buildSwitchTile(
-        context: context,
-        icon: Icons.water_drop_outlined,
-        title: 'Pengingat Hujan',
-        value: settingsProvider.rainReminder,
-        onChanged: (value) => settingsProvider.setRainReminder(value),
-      ),
-      _buildSectionTitle('Astronomi', context),
-      _buildSwitchTile(
-        context: context,
-        icon: Icons.star_border_outlined,
-        title: 'Pengingat Observasi',
-        value: settingsProvider.astroReminder,
-        onChanged: (value) => settingsProvider.setAstroReminder(value),
-      ),
-      _buildSectionTitle('Dukungan', context),
+      // Saya menghapus Rain/Astro reminder di sini agar sinkron dengan PreferencePage
+      // dan tidak menyebabkan UI "kosong sebelah".
+
+      // --- SUPPORT ---
+      _buildSectionTitle('SUPPORT', context),
       Card(
         child: ListTile(
           leading: Icon(
@@ -179,11 +149,11 @@ class SettingsScreen extends StatelessWidget {
                 ? Colors.amber
                 : Theme.of(context).primaryColor,
           ),
-          title: const Text('Upgrade ke Pro'),
+          title: const Text('Upgrade to Pro'),
           subtitle: Text(
             subProvider.isPro
-                ? 'Anda adalah pengguna Pro'
-                : 'Buka semua fitur canggih',
+                ? 'You are a Pro User'
+                : 'Unlock advanced features',
           ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () {
@@ -194,7 +164,9 @@ class SettingsScreen extends StatelessWidget {
           },
         ),
       ),
-      _buildSectionTitle('Akun', context),
+
+      // --- ACCOUNT ---
+      _buildSectionTitle('ACCOUNT', context),
       Card(
         color: Colors.red[50],
         child: ListTile(
@@ -210,12 +182,12 @@ class SettingsScreen extends StatelessWidget {
             bool? confirmLogout = await showDialog(
               context: context,
               builder: (ctx) => AlertDialog(
-                title: const Text('Konfirmasi Logout'),
-                content: const Text('Apakah Anda yakin ingin keluar?'),
+                title: const Text('Confirm Logout'),
+                content: const Text('Are you sure you want to logout?'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(ctx).pop(false),
-                    child: const Text('Batal'),
+                    child: const Text('Cancel'),
                   ),
                   TextButton(
                     onPressed: () => Navigator.of(ctx).pop(true),
@@ -225,87 +197,73 @@ class SettingsScreen extends StatelessWidget {
               ),
             );
 
-            // 6. PERBAIKAN LOGIKA: Hanya navigasi jika confirmLogout == true
             if (confirmLogout == true) {
-              await context.read<FakeAuthService>().logout();
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-                (Route<dynamic> route) => false,
-              );
+              // Menggunakan AuthProvider untuk logout
+              await context.read<AuthProvider>().logout();
+
+              if (context.mounted) {
+                // Kembali ke halaman awal (WelcomeScreen)
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                  (Route<dynamic> route) => false,
+                );
+              }
             }
-            // Baris navigasi yang ada di sini sebelumnya telah dihapus
           },
         ),
       ),
 
-      // --- 7. TOMBOL DEBUG DITAMBAHKAN DI SINI ---
-      _buildSectionTitle('Debugging', context),
+      // --- DEBUGGING ---
+      _buildSectionTitle('DEBUGGING', context),
 
-      // Tombol 1: Tes Tampilan Notifikasi
       Card(
         color: Colors.blue[50],
         child: ListTile(
           leading: Icon(Icons.visibility, color: Colors.blue[700]),
           title: Text(
-            'Debug: Tes Tampilan Notifikasi',
+            'Debug: Test Notification UI',
             style: TextStyle(color: Colors.blue[700]),
           ),
-          subtitle: const Text('Memicu notifikasi lokal (hanya UI)'),
+          subtitle: const Text('Trigger local notification (UI only)'),
           onTap: () async {
-            print("DEBUG: Memicu notifikasi lokal (UI Only)...");
             final notificationService = NotificationService();
             await notificationService.initialize();
 
-            // Tes Versi Free
             await notificationService.showNotification(
-              98, // ID unik untuk tes
-              "Tes Notifikasi (Free)",
-              "Indeks Hiking hari ini: 7/10",
-            );
-
-            // Jeda singkat
-            await Future.delayed(const Duration(seconds: 2));
-
-            // Tes Versi Pro
-            await notificationService.showNotification(
-              99, // ID unik untuk tes
-              "Tes Notifikasi (Pro)",
-              "Cukup baik, tapi perhatikan cuaca. (Skor: 7/10)",
+              99,
+              "Test Notification",
+              "This is a sample notification for weather alerts.",
             );
 
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Tes notifikasi UI dikirim!')),
+                const SnackBar(content: Text('Notification sent!')),
               );
             }
           },
         ),
       ),
 
-      // Tombol 2: Tes Logika Latar Belakang
       Card(
         color: Colors.orange[50],
         child: ListTile(
           leading: Icon(Icons.sync, color: Colors.orange[700]),
           title: Text(
-            'Debug: Tes Logika Latar Belakang',
+            'Debug: Test Background Task',
             style: TextStyle(color: Colors.orange[700]),
           ),
-          subtitle: const Text('Memicu WorkManager 1x (alur penuh)'),
+          subtitle: const Text('Trigger WorkManager 1x'),
           onTap: () async {
-            print("DEBUG: Memicu tugas WorkManager satu-kali...");
             await Workmanager().registerOneOffTask(
-              "1-oneoff-test", // ID Unik untuk tugas ini
-              "fetchWeatherNotif", // Nama TUGAS YANG SAMA dengan di main.dart
+              "1-oneoff-test",
+              "fetchWeatherNotif",
               constraints: Constraints(networkType: NetworkType.connected),
             );
 
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text(
-                    'Tugas latar belakang dijadwalkan! Cek konsol & notifikasi dalam ~30 detik.',
-                  ),
+                  content: Text('Background task scheduled! Check console.'),
                 ),
               );
             }

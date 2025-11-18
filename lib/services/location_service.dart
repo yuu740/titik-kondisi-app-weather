@@ -2,28 +2,21 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
 class LocationService {
-  // Mendapatkan lokasi saat ini
   Future<Position?> getCurrentLocation() async {
-    // 1. Cek status izin
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
-      // 2. Jika ditolak, minta izin
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        // Jika tetap ditolak, kembalikan null
         return null;
       }
     }
 
-    // 3. Jika diizinkan, dapatkan lokasi
     return await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
   }
 
-  // --- FUNGSI INI YANG DIMODIFIKASI ---
-  // Mengubah koordinat menjadi alamat yang lebih spesifik
   Future<String> getAddressFromCoordinates(
     double latitude,
     double longitude,
@@ -36,8 +29,6 @@ class LocationService {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
 
-        // Membangun string alamat yang lebih detail
-        // Prioritas: Nama Jalan > Kelurahan/Daerah > Kecamatan > Kota
         String address = "";
 
         if (place.thoroughfare != null && place.thoroughfare!.isNotEmpty) {
@@ -53,22 +44,20 @@ class LocationService {
           address += "${place.subAdministrativeArea}";
         }
 
-        // Membersihkan koma di akhir jika ada
         if (address.endsWith(", ")) {
           address = address.substring(0, address.length - 2);
         }
 
-        return address.isNotEmpty ? address : "Lokasi tidak diketahui";
+       return address.isNotEmpty ? address : "Unknown location"; 
       }
-      return "Lokasi tidak ditemukan";
+      return "Location not found"; 
     } catch (e) {
-      print("Error getting address: $e"); // Tambahkan print untuk debug
-      return "Gagal mendapatkan nama lokasi";
+      print("Error getting address: $e"); 
+      return "Failed to get location name"; 
     }
   }
   Future<Position?> getCoordinatesFromAddress(String address) async {
     try {
-      // 1. Gunakan package geocoding untuk mencari alamat
       List<Location> locations = await locationFromAddress(address);
 
       if (locations.isNotEmpty) {

@@ -2,13 +2,15 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../constants/dummy_data.dart';
+
+import '../models/rain_forecast_model.dart';
+import '../models/weather_response.dart';
+
 import '../provider/location_provider.dart';
 import '../provider/setting_provider.dart';
+import '../provider/weather_provider.dart';
 import '../widgets/animated_fade_slide.dart';
-import '../provider/weather_provider.dart'; 
-import '../models/weather_response.dart'; 
-import '../screens/setting_screen.dart'; 
+import '../screens/setting_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -27,16 +29,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String? result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Pilih Lokasi Manual'),
+        title: const Text('Select Manual Location'), // EN
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: 'Masukkan nama kota'),
+          decoration: const InputDecoration(hintText: 'Enter city name'), // EN
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: const Text('Cancel'), // EN
           ),
           TextButton(
             onPressed: () {
@@ -44,7 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Navigator.pop(context, controller.text);
               }
             },
-            child: const Text('Simpan'),
+            child: const Text('Save'), // EN
           ),
         ],
       ),
@@ -76,23 +78,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.location_off_outlined, size: 60, color: Colors.grey),
+                const Icon(Icons.location_off_outlined, size: 60, color: Colors.grey),
                 const SizedBox(height: 16),
                 const Text(
-                  'Lokasi otomatis nonaktif.',
+                  'Automatic location disabled.', // EN
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Aktifkan di pengaturan atau pilih lokasi secara manual.',
+                  'Enable in settings or select location manually.', // EN
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () => _showSearchDialog(context),
-                  child: const Text('Pilih Lokasi Manual'),
+                  child: const Text('Select Manual Location'), // EN
                 ),
                 TextButton(
                   onPressed: () {
@@ -100,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     );
                   },
-                  child: const Text('Buka Pengaturan'),
+                  child: const Text('Open Settings'), // EN
                 ),
               ],
             ),
@@ -119,14 +121,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Tampilkan error jika ada
     if (weatherProvider.error != null && weatherProvider.weatherData == null) {
-      
-      // Ini adalah logika yang Anda tulis, sekarang di tempat yang benar
       final errorString = weatherProvider.error.toString();
       bool isOfflineError = errorString.contains('SocketException') ||
           errorString.contains('Failed host lookup');
         
       if (isOfflineError) {
-        // JIKA BENAR OFFLINE: Tampilkan widget baru yang ramah
         return Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
@@ -134,10 +133,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             elevation: 0,
             backgroundColor: Colors.transparent,
           ),
-          body: _buildOfflineErrorWidget(context), // Panggil widget baru kita
+          body: _buildOfflineErrorWidget(context),
         );
       } else {
-        // JIKA ERROR LAIN: Tampilkan error seperti biasa (tapi lebih rapi)
         return Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
@@ -149,7 +147,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Text(
-                'Terjadi kesalahan: $errorString', // Tetap tampilkan error lain
+                'Error Found: $errorString',
                 textAlign: TextAlign.center,
               ),
             ),
@@ -158,22 +156,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
-    // Tampilkan jika data tidak ada (kasus aneh)
     if (weatherProvider.weatherData == null) {
       return Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(title: const Text("Dashboard"), elevation: 0),
-        body: const Center(child: Text('Data cuaca tidak tersedia.')),
+        body: const Center(child: Text('Weather data unavailable.')), // EN
       );
     }
-    // --- Akhir Logika Loading & Error ---
 
-    // 5. Jika lolos, kita punya data!
+    // --- DATA READY ---
     final apiData = weatherProvider.weatherData!;
-    final weather = apiData.weather; // Data cuaca spesifik
+    final weather = apiData.weather; 
+    final rainData = weatherProvider.rainData;
+
+    // Format tanggal ke Bahasa Inggris (en_US)
     final formattedDate = DateFormat(
       'EEEE, dd MMMM yyyy - HH:mm',
-      'id_ID',
+      'en_US', 
     ).format(DateTime.now());
 
     double temp = weather.temperature;
@@ -228,11 +227,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _buildWeatherDetailsGrid(context, weather),
                         const SizedBox(height: 24),
                         Text(
-                          'Prediksi Hujan 6 Jam ke Depan',
+                          'Rain Forecast (6h)', // EN
                           style: theme.textTheme.titleLarge,
                         ),
                         const SizedBox(height: 12),
-                        _buildRainForecast(context),
+                        _buildRainForecast(context, rainData),
                       ],
                     ),
                   ),
@@ -252,11 +251,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _buildWeatherDetailsGrid(context, weather),
                   const SizedBox(height: 24),
                   Text(
-                    'Prediksi Hujan 6 Jam ke Depan',
+                    'Rain Forecast (6h)', // EN
                     style: theme.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 12),
-                  _buildRainForecast(context),
+                  _buildRainForecast(context, rainData),
                 ],
               ),
             );
@@ -265,40 +264,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-Widget _buildOfflineErrorWidget(BuildContext context) {
+
+  Widget _buildOfflineErrorWidget(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wifi_off_outlined, size: 60, color: Colors.grey),
+            const Icon(Icons.wifi_off_outlined, size: 60, color: Colors.grey),
             const SizedBox(height: 16),
             const Text(
-              'Koneksi Gagal',
+              'Connection Failed', // EN
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             const Text(
-              'Gagal memuat data cuaca. Pastikan Anda terhubung ke internet.',
+              'Failed to load data. Please check your internet connection.', // EN
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                // Saat ditekan, panggil WeatherProvider untuk mencoba mengambil data lagi
                 Provider.of<WeatherProvider>(context, listen: false)
                     .fetchWeatherData();
               },
-              child: const Text('Coba Lagi'),
+              child: const Text('Try Again'), // EN
             ),
           ],
         ),
       ),
     );
   }
+
   Widget _buildHeader(
     ThemeData theme,
     LocationProvider locationProvider,
@@ -312,36 +312,33 @@ Widget _buildOfflineErrorWidget(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Rekomendasi Hiking (biasanya dari API sudah bahasa Inggris jika API mendukung,
+          // jika tidak, kita tampilkan apa adanya dari API)
           Text(
             apiData.indices.hikingRecommendation,
             style: theme.textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Row(
-            // Agar ikon dan tombol edit tetap di atas jika teks wrapping
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.only(
-                  top: 2.0,
-                ), // Menyesuaikan posisi ikon
+                padding: const EdgeInsets.only(top: 2.0),
                 child: Icon(Icons.location_on, color: locationColor, size: 18),
               ),
               const SizedBox(width: 8),
-              // Mengganti Expanded dengan Flexible agar teks bisa wrap
               Flexible(
                 child: locationProvider.isLoading
                     ? Text(
-                        "Memuat lokasi...",
+                        "Loading location...", // EN
                         style: TextStyle(color: locationColor),
                       )
                     : Text(
                         locationProvider.currentLocationName ??
-                            "Lokasi tidak diketahui",
+                            "Unknown Location", // EN
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: locationColor,
                         ),
-                        // Text akan otomatis wrap jika tidak muat
                       ),
               ),
               IconButton(
@@ -405,8 +402,8 @@ Widget _buildOfflineErrorWidget(BuildContext context) {
               const SizedBox(height: 8),
               Text(
                 weather.precipitation > 0
-                    ? "Rainy"
-                    : (weather.cloudCover > 50 ? "Cloudy" : "Clear"),
+                    ? "Rainy" // EN
+                    : (weather.cloudCover > 50 ? "Cloudy" : "Clear"), // EN
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                 ),
@@ -445,13 +442,13 @@ Widget _buildOfflineErrorWidget(BuildContext context) {
           ),
           _InfoCard(
             icon: Icons.water_drop_outlined,
-            label: 'Precipitation',
+            label: 'Precipitation', // EN
             value: '${weather.precipitation} mm',
             color: Colors.lightBlue,
           ),
           _InfoCard(
             icon: Icons.cloud_outlined,
-            label: 'Cloud Cover',
+            label: 'Cloud Cover', // EN
             value: '${weather.cloudCover}%',
             color: Colors.grey,
           ),
@@ -464,53 +461,134 @@ Widget _buildOfflineErrorWidget(BuildContext context) {
     );
   }
 
-  Widget _buildRainForecast(BuildContext context) {
+  Widget _buildRainForecast(BuildContext context, RainForecastData? rainData) {
     final theme = Theme.of(context);
+
+    if (rainData == null || rainData.hourlyForecast.isEmpty) {
+      return Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: theme.cardColor.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(16),
+           border: Border.all(color: theme.dividerColor.withOpacity(0.3)),
+        ),
+        child: const Center(
+          child: Text(
+            "Loading forecast...", // EN
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
     return AnimatedFadeSlide(
       delay: 500,
       child: Container(
-        height: 130,
+        padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
           color: theme.cardColor.withOpacity(0.8),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
         ),
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-          itemCount: DummyData.hourlyRain.length,
-          separatorBuilder: (context, index) => const SizedBox(width: 24),
-          itemBuilder: (context, index) {
-            final entry = DummyData.hourlyRain.asMap().entries.elementAt(index);
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.end,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header (Text Prediksi)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${(entry.value * 100).toInt()}%',
-                  style: theme.textTheme.bodySmall,
+                Padding(
+                  padding: const EdgeInsets.only(top: 2.0),
+                  child: Icon(
+                    Icons.info_outline_rounded, 
+                    size: 18, 
+                    color: theme.primaryColor
+                  ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Container(
-                    width: 35,
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      width: 35,
-                      height: entry.value * 60,
-                      decoration: BoxDecoration(
-                        color: theme.primaryColor,
-                        borderRadius: const BorderRadius.all(
-                          Radius.circular(6),
-                        ),
-                      ),
+                  child: Text(
+                    rainData.prediction, // API Prediction Text
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text('${entry.key + 1}h', style: theme.textTheme.bodySmall),
               ],
-            );
-          },
+            ),
+            const SizedBox(height: 20),
+            
+            // Chart
+            SizedBox(
+              height: 110,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: rainData.hourlyForecast.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 24),
+                itemBuilder: (context, index) {
+                  final item = rainData.hourlyForecast[index];
+                  
+                  // Panggil helper shortLabel dari model ('1 jam lagi' -> '1h')
+                  // Pastikan model sudah diupdate
+                  final durationLabel = item.shortLabel; 
+
+                  // Helper probabilitas
+                  final probabilityValue = item.probabilityValue;
+
+                  final barColor = probabilityValue > 0.5 
+                      ? theme.primaryColor 
+                      : theme.primaryColor.withOpacity(0.4);
+
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        item.probability,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 11, 
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodySmall?.color?.withOpacity(0.8)
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      
+                      Expanded(
+                        child: Container(
+                          width: 30,
+                          alignment: Alignment.bottomCenter,
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: probabilityValue),
+                            duration: const Duration(milliseconds: 800),
+                            curve: Curves.easeOutQuart,
+                            builder: (context, value, _) {
+                              return Container(
+                                width: 30,
+                                height: value == 0 ? 4 : (value * 70).clamp(4.0, 70.0),
+                                decoration: BoxDecoration(
+                                  color: barColor,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      // Label Waktu '1h', '2h'
+                      Text(
+                        durationLabel, 
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

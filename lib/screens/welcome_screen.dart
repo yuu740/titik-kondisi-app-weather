@@ -1,4 +1,3 @@
-// screens/welcome_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -32,9 +31,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
     super.initState();
     _adManager.loadInterstitialAd();
 
-    // Setup animasi
     _fadeController = AnimationController(vsync: this, duration: const Duration(seconds: 2));
     _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeIn);
+    
     _slideController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
     _slideAnimation = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
       CurvedAnimation(parent: _slideController, curve: Curves.easeOutQuart),
@@ -45,7 +44,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
 
   Future<void> _checkLoginAndProceed() async {
     const storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'auth_token');
+    // final token = await storage.read(key: 'auth_token');
+    final token = await storage.read(key: 'session_token');
 
     setState(() {
       _isLoggedIn = token != null;
@@ -55,11 +55,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
     _fadeController.forward();
 
     if (_isLoggedIn) {
-      // Jika sudah login, tunggu animasi, lalu tampilkan iklan & navigasi
       await Future.delayed(const Duration(seconds: 3));
       _proceedToMainApp();
     } else {
-      // Jika belum login, tunggu animasi, lalu tampilkan tombol
       await Future.delayed(const Duration(seconds: 2));
       if (mounted) _slideController.forward();
     }
@@ -111,7 +109,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: isDarkMode ? [const Color(0xFF6A1B9A), Colors.black] : [Colors.blue[200]!, Colors.white],
+            colors: isDarkMode 
+                ? [const Color(0xFF0F2027), const Color(0xFF203A43), const Color(0xFF2C5364)] // Deep Space
+                : [Colors.blue[100]!, Colors.white],
           ),
         ),
         child: Padding(
@@ -124,24 +124,30 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                 opacity: _fadeAnimation,
                 child: Column(
                   children: [
-                    Icon(
-                      isDarkMode ? Icons.nights_stay : Icons.wb_sunny,
-                      size: 100,
-                      color: isDarkMode ? Colors.white : Colors.yellow[700],
+                    Container(
+                      height: 150, 
+                      width: 150,
+                      decoration: BoxDecoration(
+                        image: const DecorationImage(
+                          image: AssetImage('assets/images/logo.png'), 
+                          fit: BoxFit.contain,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
                     const SizedBox(height: 20),
-                    Text('TitikKondisi', style: Theme.of(context).textTheme.displaySmall),
-                    const SizedBox(height: 10),
                     Text(
-                      'Prakiraan cuaca akurat dengan info langit malam terkini.',
-                      style: Theme.of(context).textTheme.bodyLarge,
+                      'From air quality to astral clarity',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
               const Spacer(flex: 3),
-              // Tampilkan tombol hanya jika tidak loading dan belum login
               if (!_isLoading && !_isLoggedIn)
                 SlideTransition(
                   position: _slideAnimation,
@@ -149,9 +155,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                      elevation: 5,
                     ),
                     onPressed: _navigateToLogin,
-                    child: const Text('Masuk atau Daftar', style: TextStyle(fontSize: 16)),
+                    child: const Text('Login or Sign Up', style: TextStyle(fontSize: 16)),
                   ),
                 ),
               const SizedBox(height: 40),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:titik_kondisi/provider/auth_provider.dart';
 import '../services/fake_api_service.dart';
-import '../services/fake_auth_service.dart';
+import '../services/auth_service.dart';
 class SettingsProvider with ChangeNotifier {
   bool _isCelsius = true;
   bool _notifications = true;
@@ -15,7 +16,7 @@ class SettingsProvider with ChangeNotifier {
   bool get rainReminder => _rainReminder;
   bool get astroReminder => _astroReminder;
 
-  final FakeAuthService _authService;
+  final AuthProvider _authService;
   final FakeApiService _apiService;
 
   SettingsProvider(this._authService, this._apiService) {
@@ -54,7 +55,6 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> reloadSettings() async {
     print("Memuat ulang pengaturan berdasarkan status auth...");
-    // Cukup panggil kembali method internal _loadSettings
     await _loadSettings();
   }
 

@@ -46,7 +46,7 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.nights_stay_outlined),
             activeIcon: Icon(Icons.nights_stay),
-            label: 'Info Langit',
+            label: 'Sky Info',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),

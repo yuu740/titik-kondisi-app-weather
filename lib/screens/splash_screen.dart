@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:titik_kondisi/provider/location_provider.dart';
+import '../provider/location_provider.dart';
 import 'main_screen.dart';
 import 'onboarding_screen.dart';
 import 'welcome_screen.dart';
@@ -22,37 +22,37 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _initializeAppAndNavigate() async {
-    // Inisialisasi awal
+    // 1. Inisialisasi Lokasi
     await Provider.of<LocationProvider>(context, listen: false).fetchInitialLocation();
+    
+    // Simulasi loading minimal 2 detik agar logo terlihat
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
-    // Cek status login
+    // 2. Cek Session (Perbaikan Key di sini)
     const storage = FlutterSecureStorage();
-    final String? token = await storage.read(key: 'auth_token');
+    // GUNAKAN 'session_token' AGAR COCOK DENGAN AUTH PROVIDER
+    final String? token = await storage.read(key: 'session_token'); 
 
     if (token != null) {
-      // KASUS 1: Pengguna SUDAH LOGIN
       final prefs = await SharedPreferences.getInstance();
+
       final bool isFirstRunAfterLogin = prefs.getBool('isFirstRunAfterLogin') ?? true;
 
       if (isFirstRunAfterLogin) {
-        // Jika ini login pertama, tampilkan halaman preferensi
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const OnboardingScreen()),
         );
       } else {
-        // Jika sudah pernah login & set preferensi, langsung ke dashboard
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          MaterialPageRoute(builder: (_) => const MainScreen()),
         );
       }
     } else {
-      // KASUS 2: Pengguna BELUM LOGIN
-      // Arahkan ke halaman selamat datang dengan tombol login
+      // --- KASUS: BELUM LOGIN ---
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
@@ -69,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 20),
-            Text('Memuat...'),
+            Text('Loading...'),
           ],
         ),
       ),

@@ -28,7 +28,7 @@ class _PreferencePage1State extends State<PreferencePage1> {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pengaturan Awal (1/2)'),
+        title: const Text('Initial Setup (1/2)'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -38,12 +38,12 @@ class _PreferencePage1State extends State<PreferencePage1> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Personalisasi Aplikasi',
+              'App Personalization',              
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Atur preferensi Anda untuk pengalaman terbaik.',
+              'Customize your preferences for the best experience.',
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(color: Colors.grey),
@@ -52,7 +52,7 @@ class _PreferencePage1State extends State<PreferencePage1> {
             _buildPreferenceCard(
               context: context,
               icon: Icons.color_lens_outlined,
-              title: 'Tema Pilihan Anda',
+              title: 'Choose Your Theme',
               child: Wrap(
                 // Menggunakan Wrap untuk responsivitas
                 spacing: 12.0,
@@ -77,14 +77,14 @@ class _PreferencePage1State extends State<PreferencePage1> {
             _buildPreferenceCard(
               context: context,
               icon: Icons.notifications_active_outlined,
-              title: 'Izinkan Pengingat Cuaca?',
+              title: 'Allow Weather Reminders?',
               child: Wrap(
                 spacing: 12.0,
                 runSpacing: 12.0,
                 children: [
                   _buildChoiceChip(
                     context: context,
-                    label: 'Ya, tentu',
+                    label: 'Yes, sure',                    
                     isSelected: settingsProvider.notifications,
                     onSelected: (selected) async {
                       if (selected) {
@@ -97,7 +97,7 @@ class _PreferencePage1State extends State<PreferencePage1> {
                   ),
                   _buildChoiceChip(
                     context: context,
-                    label: 'Tidak',
+                    label: 'No',
                     isSelected: !settingsProvider.notifications,
                     onSelected: (selected) {
                       if (selected) {
@@ -112,14 +112,14 @@ class _PreferencePage1State extends State<PreferencePage1> {
             _buildPreferenceCard(
               context: context,
               icon: Icons.location_on_outlined,
-              title: 'Gunakan Lokasi Otomatis?',
+              title: 'Use Automatic Location?',              
               child: Wrap(
                 spacing: 12.0,
                 runSpacing: 12.0,
                 children: [
                   _buildChoiceChip(
                     context: context,
-                    label: 'Ya, Otomatis',
+                    label: 'Yes, Automatic',                    
                     isSelected: settingsProvider.autoLocation,
                     onSelected: (selected) {
                       if (selected) {
@@ -129,7 +129,7 @@ class _PreferencePage1State extends State<PreferencePage1> {
                   ),
                   _buildChoiceChip(
                     context: context,
-                    label: 'Pilih Manual',
+                    label: 'Select Manually',                    
                     isSelected: !settingsProvider.autoLocation,
                     onSelected: (selected) {
                       if (selected) {

@@ -1,4 +1,3 @@
-// screens/subscription_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/subs_provider.dart';
@@ -12,7 +11,7 @@ class SubscriptionScreen extends StatelessWidget {
       builder: (context, subProvider, child) {
         final theme = Theme.of(context);
         return Scaffold(
-          appBar: AppBar(title: const Text('Dukung & Upgrade')),
+          appBar: AppBar(title: const Text('Support & Upgrade')), // EN
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20.0),
             child: Column(
@@ -22,8 +21,8 @@ class SubscriptionScreen extends StatelessWidget {
                     color: Colors.green.withOpacity(0.2),
                     child: const ListTile(
                       leading: Icon(Icons.check_circle, color: Colors.green),
-                      title: Text('Anda adalah Pengguna Pro!'),
-                      subtitle: Text('Terima kasih atas dukungan Anda.'),
+                      title: Text('You are a Pro User!'), // EN
+                      subtitle: Text('Thank you for your support.'), // EN
                     ),
                   ),
                 const SizedBox(height: 20),
@@ -55,14 +54,14 @@ class SubscriptionScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            Text('Rp 15.000 / bulan',
+            Text('IDR 15,000 / month', // EN
               style: TextStyle(fontSize: 18, color: theme.primaryColor, fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            _buildFeatureItem(Icons.block, 'Bebas Iklan', 'Nikmati aplikasi tanpa gangguan.'),
-            _buildFeatureItem(Icons.widgets_outlined, 'Widget Eksklusif', 'Akses widget cuaca canggih di home screen.'),
-            _buildFeatureItem(Icons.notification_add, 'Notifikasi Cerdas', 'Peringatan hujan & astronomi yang lebih akurat.'),
+            _buildFeatureItem(Icons.block, 'Ad-Free', 'Enjoy the app without interruptions.'), // EN
+            _buildFeatureItem(Icons.widgets_outlined, 'Exclusive Widgets', 'Access advanced weather widgets on home screen.'), // EN
+            _buildFeatureItem(Icons.notification_add, 'Smart Notifications', 'More accurate rain & astronomy alerts.'), // EN
             const SizedBox(height: 24),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -90,8 +89,9 @@ class SubscriptionScreen extends StatelessWidget {
                       ),
                     )
                   : Text(subProvider.isPro
-                      ? 'Nonaktifkan Pro (Simulasi)'
-                      : 'Upgrade ke Pro'),            ),
+                      ? 'Deactivate Pro (Simulation)' // EN
+                      : 'Upgrade to Pro'), // EN
+            ),
           ],
         ),
       ),
@@ -106,12 +106,12 @@ class SubscriptionScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Beri Donasi',
+            const Text('Donate', // EN
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            const Text('Suka dengan aplikasi ini? Dukung pengembang dengan donasi seikhlasnya.',
+            const Text('Love this app? Support the developer with a donation.', // EN
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -120,16 +120,13 @@ class SubscriptionScreen extends StatelessWidget {
                 disabledBackgroundColor: Colors.grey.withOpacity(0.5),
               ),
               onPressed: subProvider.isDonationProcessing
-                  ? null // Nonaktifkan jika sedang proses
+                  ? null 
                   : () async {
-                      // Panggil simulasi
                       await subProvider.simulateDonation();
-                      
-                      // Tampilkan SnackBar setelah selesai
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Terima kasih atas donasi Anda! (Simulasi)'),
+                            content: Text('Thank you for your donation! (Simulation)'), // EN
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -143,7 +140,7 @@ class SubscriptionScreen extends StatelessWidget {
                         strokeWidth: 3,
                       ),
                     )
-                  : const Text('Donasi Sekarang'),
+                  : const Text('Donate Now'), // EN
             )
           ],
         ),

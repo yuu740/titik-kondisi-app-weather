@@ -38,7 +38,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.ease,
                   ),
-                  child: const Text('Kembali'),
+                  child: const Text('Back'),
                 ),
               const Spacer(),
               ElevatedButton(
@@ -63,7 +63,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     );
                   }
                 },
-                child: Text(_currentPage == 1 ? 'Mulai Gunakan' : 'Lanjut'),
+                child: Text(_currentPage == 1 ? 'Let\'s start' : 'Continue'),
               ),
             ],
           ),

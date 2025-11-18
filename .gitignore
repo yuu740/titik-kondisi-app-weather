@@ -46,3 +46,4 @@ app.*.map.json
 
 /lib/config/api_config.dart
 .env
+/assets/images/logo.png
