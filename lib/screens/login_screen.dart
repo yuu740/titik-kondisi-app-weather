@@ -17,14 +17,12 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   
-  // 1. KITA BUTUH CONTROLLER UNTUK MENGAMBIL TEXT INPUT
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   final AdManager _adManager = AdManager();
   
-  // 2. VARIABLE INI PENENTU APAKAH TAMPILAN LOGIN ATAU REGISTER
   bool _isLoginMode = true; 
   
   @override
@@ -147,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordController,
                     decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
                     obscureText: true,
-                    validator: (value) => (value == null || value.length < 6) ? 'Password must be at least 6 characters' : null,                  
+                    validator: (value) => (value == null || value.length < 8) ? 'Password must be at least 8 characters' : null,                  
                   ),
 
                   if (!_isLoginMode) ...[
