@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -32,26 +33,21 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Panggil API Asli
       final response = await _authService.login(email, password);
       
-      print("API Response: ${response.message}");
+      // --- LOGIKA BARU: Simpan Status Pro dari API ---
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isPro', response.isPro); 
+      // ----------------------------------------------
 
-      // 2. JIKA SUKSES (Tidak error):
-      // Karena server tidak kirim token, kita buat "Dummy Token"
-      // untuk menandakan di HP bahwa user ini sudah login.
       const dummyToken = "session_aktif_pameran_2025"; 
-
       _token = dummyToken;
       _isLoggedIn = true;
-
-      // Simpan ke Secure Storage agar sesi bertahan walaupun app ditutup
       await _storage.write(key: 'session_token', value: dummyToken);
       
-      print("Login Sukses. Sesi Lokal Dibuat.");
+      print("Login Sukses. Pro Status: ${response.isPro}");
     } catch (e) {
       _isLoggedIn = false;
-      print("Login Error: $e");
       rethrow; 
     } finally {
       _isLoading = false;
@@ -65,16 +61,18 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final response = await _authService.register(email, password, confirmPassword);
-      print("Register Response: ${response.message}");
       
-      // Setelah register sukses, kita bisa langsung login-kan user (Auto Login)
-      // Buat dummy token juga
+      // --- LOGIKA BARU: Simpan Status Pro dari API ---
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isPro', response.isPro);
+      // ----------------------------------------------
+
       const dummyToken = "session_aktif_pameran_2025"; 
       _token = dummyToken;
       _isLoggedIn = true;
       await _storage.write(key: 'session_token', value: dummyToken);
 
-      print("Register Sukses. Auto Login Aktif.");
+      print("Register Sukses. Pro Status: ${response.isPro}");
     } catch (e) {
       rethrow;
     } finally {
